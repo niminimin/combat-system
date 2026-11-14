@@ -36,6 +36,9 @@ public class AttackController : MonoBehaviour
     [Tooltip("攻击中再次按攻击键时，缓存这次输入并在当前攻击结束后立刻接上（连招手感）")]
     [SerializeField] private bool bufferNextAttack = true;
 
+    [Tooltip("动画播到该进度（0~1）就解除\"攻击中\"状态，允许移动。收招尾段通常不需要锁死")]
+    [SerializeField, Range(0.1f, 1f)] private float releaseNormalizedTime = 0.85f;
+
     /// <summary>是否正在攻击。</summary>
     public bool IsAttacking { get; private set; }
 
@@ -55,6 +58,7 @@ public class AttackController : MonoBehaviour
     private float _readyTime;
     private float _attackTimeout;
     private bool _queued;
+    private bool _sawAttackState;
 
     private void Awake()
     {
@@ -67,15 +71,26 @@ public class AttackController : MonoBehaviour
         if (!IsAttacking) return;
 
         AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        bool inAttackState = state.IsName(attackStateName);
 
-        // 动画播完（normalizedTime 过 1）→ 结束
-        if (state.IsName(attackStateName) && state.normalizedTime >= 1f)
+        if (inAttackState) _sawAttackState = true;
+
+        // ① 播到指定进度就放行移动（不必等到 100%，收招那几帧通常不需要锁）
+        if (inAttackState && state.normalizedTime >= releaseNormalizedTime)
         {
             FinishAttack();
             return;
         }
 
-        // 兜底：动画事件丢失 / 状态名不匹配时，别把角色永远锁在攻击中
+        // ② 关键修复：状态机已经切出 Attack 状态（例如 exitTime 到点自动回 Locomotion），
+        //    说明这一次攻击实际上已经结束了，立即解锁，不要死等 normalizedTime 到 1。
+        if (_sawAttackState && !inAttackState)
+        {
+            FinishAttack();
+            return;
+        }
+
+        // ③ 兜底：状态名配错 / 动画被中断时，别把角色永远锁在攻击中
         if (Time.time >= _attackTimeout) FinishAttack();
     }
 
@@ -101,6 +116,7 @@ public class AttackController : MonoBehaviour
     {
         IsAttacking = true;
         _queued = false;
+        _sawAttackState = false;
 
         float duration = GetAttackDuration();
         _attackTimeout = Time.time + duration + 0.3f;

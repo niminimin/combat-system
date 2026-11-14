@@ -747,6 +747,7 @@ MonoBehaviour:
   fallbackDuration: 1.5
   cooldown: 0.35
   bufferNextAttack: 1
+  releaseNormalizedTime: 0.85
 --- !u!1001 &1934731219
 PrefabInstance:
   m_ObjectHideFlags: 0
