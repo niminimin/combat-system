@@ -59,6 +59,10 @@ public class ThirdPersonMotor : MonoBehaviour
     [Tooltip("Speed 参数的平滑时间，避免走跑切换突兀")]
     [SerializeField, Min(0f)] private float animSpeedDamp = 0.1f;
 
+    [Header("战斗联动")]
+    [Tooltip("攻击期间锁住移动（留空则自动查找同物体上的 AttackController）")]
+    [SerializeField] private AttackController attackController;
+
     // 参数哈希：比每帧传字符串快，也避免拼写错误
     private static readonly int SpeedParamHash = Animator.StringToHash("Speed");
 
@@ -92,6 +96,8 @@ public class ThirdPersonMotor : MonoBehaviour
 
         if (animator == null) animator = GetComponentInChildren<Animator>();
 
+        if (attackController == null) attackController = GetComponent<AttackController>();
+
         if (alignVisualOnAwake) AlignVisualToGround();
     }
 
@@ -124,6 +130,15 @@ public class ThirdPersonMotor : MonoBehaviour
     {
         Vector2 input = ReadMoveInput();
         bool sprinting = Input.GetKey(sprintKey);
+
+        // 攻击期间不接受移动输入（重力/贴地仍然生效），
+        // 判定来自通用的 AttackController，与"是不是玩家"无关
+        if (attackController != null && attackController.IsAttacking)
+        {
+            input = Vector2.zero;
+            sprinting = false;
+        }
+
         HasMoveInput = input.sqrMagnitude > 0.0001f;
 
         // 1) 输入方向 → 世界方向（相对相机水平朝向）

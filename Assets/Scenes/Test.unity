@@ -635,6 +635,8 @@ GameObject:
   - component: {fileID: 1484661155}
   - component: {fileID: 1484661157}
   - component: {fileID: 1484661156}
+  - component: {fileID: 1484661159}
+  - component: {fileID: 1484661158}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -686,6 +688,7 @@ MonoBehaviour:
   alignVisualOnAwake: 0
   animator: {fileID: 2042969951}
   animSpeedDamp: 0.1
+  attackController: {fileID: 1484661159}
 --- !u!143 &1484661157
 CharacterController:
   m_ObjectHideFlags: 0
@@ -712,6 +715,38 @@ CharacterController:
   m_SkinWidth: 0.02
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.95, z: 0.1}
+--- !u!114 &1484661158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484661151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5816515e136f4ed4d9b047ef8bca5e0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackController: {fileID: 1484661159}
+  attackKey: 323
+--- !u!114 &1484661159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484661151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eda2a96184772449960a0374bcc4881, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  animator: {fileID: 2042969951}
+  attackTrigger: Attack
+  attackStateName: Attack
+  fallbackDuration: 1.5
+  cooldown: 0.35
+  bufferNextAttack: 1
 --- !u!1001 &1934731219
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2133,7 +2168,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: d2cb745f8e36aed4d826f15e33a19e3a,
         type: 3}
       propertyPath: m_ApplyRootMotion
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6000407479487422213, guid: d2cb745f8e36aed4d826f15e33a19e3a,
         type: 3}
