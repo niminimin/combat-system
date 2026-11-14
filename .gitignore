@@ -1,0 +1,58 @@
+# ============================================================
+#  Unity 工程的 .gitignore
+#  原则：只提交"源文件"（Assets / Packages / ProjectSettings），
+#        其余都是 Unity 自动生成的，不进版本库。
+#  注意：.gitignore 不支持行尾注释，注释必须独占一行！
+# ============================================================
+
+# ---------- Unity 生成的大目录 ----------
+# Library 是导入缓存 + PackageCache（本项目约 1.8 GB）
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+# UserSettings 是本机的编辑器布局/偏好，每人不同
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Assets 的 .meta 必须提交（否则资源引用会丢），
+# 只有对应的资源本身被忽略时才忽略它的 meta
+!/[Aa]ssets/**/*.meta
+
+# ---------- IDE / 工程文件（Unity 会自动重新生成）----------
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vs/
+.idea/
+.vscode/
+*.DotSettings.user
+
+# ---------- 构建产物 ----------
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# ---------- 崩溃报告 ----------
+sysinfo.txt
+crashlytics-build.properties
+
+# ---------- 系统垃圾文件 ----------
+.DS_Store
+Thumbs.db
+desktop.ini
