@@ -20,10 +20,7 @@ public class AttackController : MonoBehaviour
     [Tooltip("留空则自动在子物体中查找 Animator")]
     [SerializeField] private Animator animator;
 
-    [Tooltip("Animator 里的触发器参数名")]
-    [SerializeField] private string attackTrigger = "Attack";
-
-    [Tooltip("Animator 里的攻击状态名（用于判断动画是否播完）")]
+    [Tooltip("Animator 里的攻击状态名。攻击直接 Play 这个状态（比 Trigger 更可靠：连招时能强制从头重播）")]
     [SerializeField] private string attackStateName = "Attack";
 
     [Tooltip("找不到状态时长时的兜底时长（秒），防止卡在攻击中")]
@@ -54,7 +51,6 @@ public class AttackController : MonoBehaviour
     /// <summary>攻击结束（动画播完或超时）。</summary>
     public event System.Action AttackFinished;
 
-    private int _triggerHash;
     private float _readyTime;
     private float _attackTimeout;
     private bool _queued;
@@ -63,7 +59,6 @@ public class AttackController : MonoBehaviour
     private void Awake()
     {
         if (animator == null) animator = GetComponentInChildren<Animator>();
-        _triggerHash = Animator.StringToHash(attackTrigger);
     }
 
     private void Update()
@@ -122,8 +117,11 @@ public class AttackController : MonoBehaviour
         _attackTimeout = Time.time + duration + 0.3f;
         _readyTime = Time.time + Mathf.Max(cooldown, 0f);
 
-        animator.ResetTrigger(_triggerHash);
-        animator.SetTrigger(_triggerHash);
+        // 关键：用 Play 强制把攻击状态从头播放。
+        // 不能用 SetTrigger —— 连招时若仍处于 Attack 状态（动画停在末尾），
+        // 触发器不会重播，normalizedTime 仍然 >= 0.95，下一帧就会被误判为"攻击结束"，
+        // 导致后续连招期间不再锁定移动。
+        animator.Play(attackStateName, 0, 0f);
 
         AttackStarted?.Invoke();
     }

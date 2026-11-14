@@ -743,7 +743,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 2042969951}
-  attackTrigger: Attack
   attackStateName: Attack
   fallbackDuration: 1.5
   cooldown: 0.35
