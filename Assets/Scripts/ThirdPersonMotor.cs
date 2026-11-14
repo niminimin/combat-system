@@ -166,7 +166,9 @@ public class ThirdPersonMotor : MonoBehaviour
             animator.SetFloat(SpeedParamHash, CurrentSpeed, animSpeedDamp, Time.deltaTime);
 
         if (debugLog && HasMoveInput)
-            Debug.Log($"[Motor] speed={CurrentSpeed:F2} grounded={_isGrounded}", this);
+            Debug.Log($"[Motor] speed={CurrentSpeed:F2} grounded={_isGrounded} " +
+                      $"animator={(animator != null ? animator.name : "NULL")} " +
+                      $"animSpeed={(animator != null ? animator.GetFloat(SpeedParamHash).ToString("F2") : "-")}", this);
     }
 
     private Vector2 ReadMoveInput()
