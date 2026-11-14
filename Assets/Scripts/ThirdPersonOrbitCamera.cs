@@ -93,6 +93,9 @@ public class ThirdPersonOrbitCamera : MonoBehaviour
     // 锁定光标的那一帧要丢弃鼠标增量（此刻鼠标会被挪到屏幕中央，delta 是跳变值）
     private bool _skipMouseFrame;
 
+    // 剩余的重试帧数：游戏视图刚获得焦点时，锁定请求可能被系统忽略，需要多试几帧
+    private int _lockRetryFrames;
+
     /// <summary>相机环绕的目标。</summary>
     public Transform Target
     {
@@ -132,34 +135,50 @@ public class ThirdPersonOrbitCamera : MonoBehaviour
     {
         // 进游戏立刻隐藏并锁住光标
         _lockWanted = controlCursor && !requireRightMouse;
-        ApplyCursorLock(_lockWanted);
-        _skipMouseFrame = true;
+        TryApplyCursorLock();
     }
 
     private void OnDisable()
     {
-        if (controlCursor) ApplyCursorLock(false);
+        _lockWanted = false;
+        _lockRetryFrames = 0;
+        ApplyCursorLock(false);
     }
 
     private void OnApplicationFocus(bool hasFocus)
     {
         if (!controlCursor) return;
 
-        // 切出窗口必须放开，否则鼠标会被困在游戏里；
-        // 切回来时按当前意愿恢复（_lockWanted 不受焦点影响）
-        ApplyCursorLock(hasFocus && _lockWanted);
+        // 切出窗口必须放开，否则鼠标会被困在游戏里；切回来再锁上
+        if (hasFocus) TryApplyCursorLock();
+        else ApplyCursorLock(false);
     }
 
     private void Update()
     {
         HandleCursor();
 
-        // 兜底：刚进 Play 或焦点刚回来时，锁定请求偶尔会被系统忽略，这里补一次
-        if (controlCursor && _lockWanted && Application.isFocused
-            && Cursor.lockState != CursorLockMode.Locked)
+        // 关键：编辑器里点 Play 的瞬间，游戏视图往往还没有焦点，
+        // 此时 Cursor.lockState = Locked 会被系统忽略（光标照样露着）。
+        // 所以不能只尝试一次，要在随后约两秒内反复重试，锁上就停。
+        if (_lockRetryFrames > 0)
         {
-            ApplyCursorLock(true);
-            _skipMouseFrame = true;
+            _lockRetryFrames--;
+
+            // 用户中途按了 Esc / 松开右键，就不再重试
+            if (!_lockWanted)
+            {
+                _lockRetryFrames = 0;
+            }
+            else if (Cursor.lockState != CursorLockMode.Locked || Cursor.visible)
+            {
+                ApplyCursorLock(true);
+                _skipMouseFrame = true;
+            }
+            else
+            {
+                _lockRetryFrames = 0;
+            }
         }
 
         // 锁定/解锁的瞬间，鼠标会被挪到屏幕中央，这一帧的 Mouse X/Y 是跳变值，
@@ -262,7 +281,7 @@ public class ThirdPersonOrbitCamera : MonoBehaviour
             if (Input.GetMouseButtonDown(1))
             {
                 _lockWanted = true;
-                ApplyCursorLock(true);
+                TryApplyCursorLock();
             }
             else if (Input.GetMouseButtonUp(1))
             {
@@ -274,7 +293,33 @@ public class ThirdPersonOrbitCamera : MonoBehaviour
         {
             // 点了画面就重新接管光标
             _lockWanted = true;
-            ApplyCursorLock(true);
+            TryApplyCursorLock();
+        }
+    }
+
+    /// <summary>请求锁定光标，并在随后若干帧内反复重试（应对"游戏视图刚获得焦点"时锁定被忽略）。</summary>
+    private void TryApplyCursorLock()
+    {
+        if (!controlCursor || !_lockWanted)
+        {
+            ApplyCursorLock(false);
+            return;
+        }
+
+        ApplyCursorLock(true);
+        _skipMouseFrame = true;
+        _lockRetryFrames = 120;   // 约 2 秒（60fps），锁上后立即停止
+    }
+
+    /// <summary>外部（菜单、对话、暂停）统一控制光标锁定。</summary>
+    public void SetCursorLocked(bool locked)
+    {
+        _lockWanted = locked;
+        if (locked) TryApplyCursorLock();
+        else
+        {
+            _lockRetryFrames = 0;
+            ApplyCursorLock(false);
         }
     }
 
