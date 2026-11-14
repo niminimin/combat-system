@@ -2171,6 +2171,11 @@ PrefabInstance:
       propertyPath: m_ApplyRootMotion
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: d2cb745f8e36aed4d826f15e33a19e3a,
+        type: 3}
+      propertyPath: m_WriteDefaultValuesOnDisable
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6000407479487422213, guid: d2cb745f8e36aed4d826f15e33a19e3a,
         type: 3}
       propertyPath: m_LocalPosition.x
