@@ -679,6 +679,7 @@ MonoBehaviour:
   deceleration: 28
   turnSpeedDegPerSec: 720
   gravity: -22
+  terminalVelocity: -30
   jumpHeight: 1.1
   enableJump: 1
   jumpKey: 32
@@ -747,7 +748,7 @@ MonoBehaviour:
   fallbackDuration: 1.5
   cooldown: 0.35
   bufferNextAttack: 1
-  releaseNormalizedTime: 0.85
+  releaseNormalizedTime: 0.95
 --- !u!1001 &1934731219
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2169,7 +2170,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: d2cb745f8e36aed4d826f15e33a19e3a,
         type: 3}
       propertyPath: m_ApplyRootMotion
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6000407479487422213, guid: d2cb745f8e36aed4d826f15e33a19e3a,
         type: 3}

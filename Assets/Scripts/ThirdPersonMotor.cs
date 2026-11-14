@@ -37,6 +37,10 @@ public class ThirdPersonMotor : MonoBehaviour
 
     [Header("重力与跳跃")]
     [SerializeField] private float gravity = -22f;
+
+    [Tooltip("终端下落速度（负值）。限制单帧位移，避免高速穿透薄地面")]
+    [SerializeField] private float terminalVelocity = -30f;
+
     [SerializeField, Min(0f)] private float jumpHeight = 1.1f;
     [SerializeField] private bool enableJump = true;
     [SerializeField] private KeyCode jumpKey = KeyCode.Space;
@@ -171,6 +175,9 @@ public class ThirdPersonMotor : MonoBehaviour
             _verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);   // v = √(2gh)
 
         _verticalVelocity += gravity * Time.deltaTime;
+
+        // 终端速度：防止长时间离地后单帧位移过大，穿透薄碰撞体（陷进地面）
+        if (_verticalVelocity < terminalVelocity) _verticalVelocity = terminalVelocity;
 
         // 6) 应用位移
         Vector3 motion = _planarVelocity + Vector3.up * _verticalVelocity;

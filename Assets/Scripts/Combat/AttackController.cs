@@ -36,8 +36,8 @@ public class AttackController : MonoBehaviour
     [Tooltip("攻击中再次按攻击键时，缓存这次输入并在当前攻击结束后立刻接上（连招手感）")]
     [SerializeField] private bool bufferNextAttack = true;
 
-    [Tooltip("动画播到该进度（0~1）就解除\"攻击中\"状态，允许移动。收招尾段通常不需要锁死")]
-    [SerializeField, Range(0.1f, 1f)] private float releaseNormalizedTime = 0.85f;
+    [Tooltip("动画播到该进度（0~1）就解除\"攻击中\"状态，允许移动。默认 0.95：几乎覆盖整个攻击，收招最后几帧放行")]
+    [SerializeField, Range(0.1f, 1f)] private float releaseNormalizedTime = 0.95f;
 
     /// <summary>是否正在攻击。</summary>
     public bool IsAttacking { get; private set; }
