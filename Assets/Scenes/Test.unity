@@ -456,6 +456,8 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 512
+  hitWindowDuration: 0.12
+  sizeMultiplier: 1.2
   maxTargetsPerSwing: 8
   logHits: 1
 --- !u!1 &648411604 stripped
