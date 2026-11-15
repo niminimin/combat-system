@@ -133,6 +133,7 @@ public abstract class EnemyController : MonoBehaviour
         // 否则 Impact 动画还在播、Agent 却继续走 → 表现为"受击动画平移"。
         if (IsStaggered)
         {
+            StaggeredThisState = true;   // 记录"当前状态里挨过打"，供状态自己判断
             Locomotion.Stop();
             if (Animator != null) Animator.SetFloat(SpeedHash, 0f, 0.1f, Time.deltaTime);
             return;
@@ -168,6 +169,9 @@ public abstract class EnemyController : MonoBehaviour
         }
     }
 
+    /// <summary>当前状态里是否挨过打（用于状态自己决定"这次不要再接连招"）。</summary>
+    public bool StaggeredThisState { get; private set; }
+
     /// <summary>唯一的状态切换入口。</summary>
     public void SwitchState(EnemyState next)
     {
@@ -177,6 +181,7 @@ public abstract class EnemyController : MonoBehaviour
 
         if (currentState != null) currentState.OnExit(this);
         currentState = target;
+        StaggeredThisState = false;      // 进入新状态，清掉"挨打"标记
         currentState.OnEnter(this);
     }
 

@@ -41,6 +41,13 @@ public class AttackState : BaseState
         // 攻击动作还在播（含收招混合）→ 等，避免边挥刀边移动
         if (owner.IsAttackAnimationPlaying() && Time.time - enterTime < MaxWaitForAnimation) return;
 
+        // 被打断过 → 这次不要再接连招，直接回到追击
+        if (owner.StaggeredThisState)
+        {
+            owner.SwitchState(EnemyState.CHASE);
+            return;
+        }
+
         // 尝试连招：没打满段数、且随机判定通过 → 立刻接下一段
         if (owner.Attack != null
             && comboStep + 1 < owner.maxComboCount
