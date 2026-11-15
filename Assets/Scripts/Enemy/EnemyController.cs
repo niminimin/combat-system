@@ -126,6 +126,15 @@ public abstract class EnemyController : MonoBehaviour
 
         if (currentState != null) currentState.LogicUpdate(this);
 
+        // 攻击动作播放期间禁止位移：即使 CHASE 刚下过 MoveTo、或者动画还在收招混合，
+        // 也强制冻结，避免"挥着刀滑行"。
+        if (IsAttackAnimationPlaying())
+        {
+            Locomotion.Freeze();
+            if (Animator != null) Animator.SetFloat(SpeedHash, 0f, 0.1f, Time.deltaTime);
+            return;
+        }
+
         // 用 Agent 的实际速度驱动动画（和玩家那套 Speed 参数同名，方便复用混合树）
         if (Animator != null)
             Animator.SetFloat(SpeedHash, Locomotion.CurrentSpeed, 0.1f, Time.deltaTime);

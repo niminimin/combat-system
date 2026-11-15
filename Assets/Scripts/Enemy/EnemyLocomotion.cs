@@ -59,10 +59,20 @@ public class EnemyLocomotion : MonoBehaviour
     /// <summary>停止移动并清掉当前路径。</summary>
     public void Stop()
     {
+        Freeze();
+    }
+
+    /// <summary>
+    /// 立刻停住：停用寻路 + 清路径 + 把速度清零，
+    /// 避免"已经停了但还带着残余速度滑一小段"。
+    /// </summary>
+    public void Freeze()
+    {
         if (Agent == null || !Agent.isOnNavMesh) return;
 
         Agent.isStopped = true;
         Agent.ResetPath();
+        Agent.velocity = Vector3.zero;
     }
 
     private void OnDrawGizmosSelected()
