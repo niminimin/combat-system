@@ -79,7 +79,7 @@ player(112, cy2)
 blade(BLADE_X0, cy2, BLADE_X1)
 EXT = 30
 d.rectangle([BLADE_X0 - EXT, cy2 - 19, BLADE_X1 + EXT, cy2 + 19], outline=ORANGE, width=3)
-text(BLADE_X1 - 10, cy2 - 66, "两端各多出约 7cm", f_small, ORANGE, anchor="rm")
+text(BLADE_X1 - 10, cy2 - 66, "两端各多出约 12cm", f_small, ORANGE, anchor="rm")
 
 enemy(ENEMY_X, cy2)
 d.rectangle([ENEMY_X - 44, cy2 - 92, ENEMY_X + 44, cy2 + 92], outline=GREEN, width=3)
