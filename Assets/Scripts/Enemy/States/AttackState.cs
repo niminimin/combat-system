@@ -2,12 +2,17 @@ using UnityEngine;
 
 /// <summary>
 /// 攻击：停下、面向玩家、发起一次攻击（复用 AttackController + AttackDefinitionSO）。
-/// 攻击结束后回到 CHASE —— 如果还在攻击距离内，CHASE 会立刻再切回 ATTACK，
-/// 于是形成"打一下 → 判断距离 → 再打"的循环，节奏由 AttackDefinitionSO.cooldown 控制。
+///
+/// 两个关键点：
+///   ① 进入时就排好"下一次允许攻击的时间"（attackInterval），
+///      所以攻击结束后 CHASE 会先和玩家对峙一会儿，而不是立刻再砍。
+///   ② 必须等**攻击动画真正离开 Attack 状态**才切回 CHASE，
+///      否则 FSM 已经开始移动、动画还在收招 → 表现为"挥着刀平移"。
 /// </summary>
 public class AttackState : BaseState
 {
-    // 兜底：万一 AttackController 没配好，也不能永远卡在攻击状态
+    // 兜底：动画卡在 Attack 状态时，别让敌人永远站着
+    private const float MaxWaitForAnimation = 2.5f;
     private float enterTime;
 
     public override EnemyState Id => EnemyState.ATTACK;
@@ -20,23 +25,21 @@ public class AttackState : BaseState
         if (owner.Player != null)
             owner.FaceTarget(owner.Player.position);
 
+        // 无论这次是否真的出手，都把下一次的间隔排上
+        owner.NextAttackTime = Time.time + Mathf.Max(owner.attackInterval, 0f);
+
         if (owner.Attack != null)
             owner.Attack.TryAttack();
     }
 
     public override void LogicUpdate(EnemyController owner)
     {
-        // 没有攻击组件：直接回追击（避免卡死）
-        if (owner.Attack == null)
-        {
-            if (Time.time - enterTime > 0.3f) owner.SwitchState(EnemyState.CHASE);
-            return;
-        }
+        // 攻击逻辑还在进行 → 等
+        if (owner.Attack != null && owner.Attack.IsAttacking) return;
 
-        // 攻击还在进行 → 继续等
-        if (owner.Attack.IsAttacking) return;
+        // 攻击动作还在播（含收招混合）→ 继续等，避免边挥刀边移动
+        if (owner.IsAttackAnimationPlaying() && Time.time - enterTime < MaxWaitForAnimation) return;
 
-        // 攻击结束 → 回追击，由 CHASE 决定是"再打一次"还是"继续追"
         owner.SwitchState(EnemyState.CHASE);
     }
 }

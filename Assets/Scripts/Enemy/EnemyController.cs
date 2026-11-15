@@ -20,6 +20,7 @@ public abstract class EnemyController : MonoBehaviour
     public EnemyLocomotion Locomotion { get; private set; }
     public EnemyPerception Perception { get; private set; }
     public AttackController Attack { get; private set; }
+    public EnemyHitReaction Reaction { get; private set; }
     public Animator Animator { get; private set; }
 
     /// <summary>玩家 Transform（由 Perception 找到）。</summary>
@@ -40,6 +41,25 @@ public abstract class EnemyController : MonoBehaviour
 
     [Tooltip("站岗时原地转身的速度（度/秒），纯表现")]
     public float guardTurnSpeed = 20f;
+
+    [Tooltip("两次攻击之间的间隔（从上次攻击结束开始算，秒）")]
+    public float attackInterval = 1.2f;
+
+    [Tooltip("Animator 里攻击状态的名字，用于判断'攻击动作是否还在播'")]
+    public string attackStateName = "Attack";
+
+    [Tooltip("Animator 里受击状态的名字，用于判断'受击动画是否还在播'")]
+    public string reactionStateName = "Impact";
+
+    /// <summary>下一次允许攻击的时间（时间戳）。由 AttackState 写入，ChaseState 读取。</summary>
+    public float NextAttackTime { get; set; }
+
+    /// <summary>攻击动作是否还在播放（含收招过渡）——用来避免"边挥刀边移动"。</summary>
+    public bool IsAttackAnimationPlaying()
+    {
+        if (Animator == null) return false;
+        return Animator.GetCurrentAnimatorStateInfo(0).IsName(attackStateName);
+    }
 
     /// <summary>出生点快照（存值，不存 Transform 引用）。</summary>
     public Vector3 HomePosition { get; private set; }
@@ -72,6 +92,7 @@ public abstract class EnemyController : MonoBehaviour
         if (Perception == null) Perception = gameObject.AddComponent<EnemyPerception>();
 
         Attack = GetComponent<AttackController>();
+        Reaction = GetComponent<EnemyHitReaction>();
 
         HomePosition = transform.position;
         HomeRotation = transform.rotation;
@@ -94,11 +115,34 @@ public abstract class EnemyController : MonoBehaviour
 
     protected virtual void Update()
     {
+        // 受击硬直：冻结状态逻辑并停下移动。
+        // 否则 Impact 动画还在播、Agent 却继续走 → 表现为"受击动画平移"。
+        if (IsStaggered)
+        {
+            Locomotion.Stop();
+            if (Animator != null) Animator.SetFloat(SpeedHash, 0f, 0.1f, Time.deltaTime);
+            return;
+        }
+
         if (currentState != null) currentState.LogicUpdate(this);
 
         // 用 Agent 的实际速度驱动动画（和玩家那套 Speed 参数同名，方便复用混合树）
         if (Animator != null)
             Animator.SetFloat(SpeedHash, Locomotion.CurrentSpeed, 0.1f, Time.deltaTime);
+    }
+
+    /// <summary>
+    /// 是否处于受击硬直：受击组件还在计时，或者 Impact 动画还在播。
+    /// （Impact clip 比 reactionDuration 长，所以要同时看动画状态。）
+    /// </summary>
+    public bool IsStaggered
+    {
+        get
+        {
+            if (Reaction != null && Reaction.IsReacting) return true;
+            if (Animator == null) return false;
+            return Animator.GetCurrentAnimatorStateInfo(0).IsName(reactionStateName);
+        }
     }
 
     /// <summary>唯一的状态切换入口。</summary>

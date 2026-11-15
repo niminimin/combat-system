@@ -1131,6 +1131,9 @@ MonoBehaviour:
   chaseSpeed: 4.5
   returnSpeed: 2.5
   guardTurnSpeed: 20
+  attackInterval: 1.2
+  attackStateName: Attack
+  reactionStateName: Impact
 --- !u!195 &1113164300
 NavMeshAgent:
   m_ObjectHideFlags: 0
