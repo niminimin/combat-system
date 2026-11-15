@@ -45,6 +45,13 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("两次攻击之间的间隔（从上次攻击结束开始算，秒）")]
     public float attackInterval = 1.2f;
 
+    [Header("脱战条件")]
+    [Tooltip("拴绳半径：离出生点超过这个距离就放弃追击、回位")]
+    public float leashRange = 12f;
+
+    [Tooltip("丢失视野多久后放弃追击（秒）。绕柱子/躲掩体可以甩脱")]
+    public float loseSightDelay = 2.5f;
+
     [Tooltip("Animator 里攻击状态的名字，用于判断'攻击动作是否还在播'")]
     public string attackStateName = "Attack";
 
