@@ -15,7 +15,10 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
     [Tooltip("Animator 里的受击触发器名")]
     [SerializeField] private string hitTrigger = "Impact";
 
-    [Tooltip("受击后多久解除移动锁定（秒）")]
+    [Tooltip("Animator 里的受击状态名（受击期间持续锁定，避免'受击动画平移'）")]
+    [SerializeField] private string hitStateName = "Impact";
+
+    [Tooltip("受击后最少锁定多久（秒）。实际锁定会持续到受击动画结束")]
     [SerializeField, Min(0f)] private float reactionDuration = 0.45f;
 
     [Tooltip("是否在控制台打印受击日志")]
@@ -24,8 +27,19 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
     private int _triggerHash;
     private float _reactingUntil;
 
-    /// <summary>是否处于受击硬直（ThirdPersonMotor 据此锁输入）。</summary>
-    public bool IsReacting => Time.time < _reactingUntil;
+    /// <summary>
+    /// 是否处于受击硬直（ThirdPersonMotor 据此锁输入）。
+    /// 两个条件取并集：最短锁定时间未到，或者受击动画还没播完。
+    /// </summary>
+    public bool IsReacting
+    {
+        get
+        {
+            if (Time.time < _reactingUntil) return true;
+            if (animator == null) return false;
+            return animator.GetCurrentAnimatorStateInfo(0).IsName(hitStateName);
+        }
+    }
 
     /// <summary>受击事件（以后接血量/UI 抖动/音效）。</summary>
     public event System.Action<GameObject> Hit;
