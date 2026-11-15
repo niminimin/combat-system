@@ -52,6 +52,10 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("丢失视野多久后放弃追击（秒）。绕柱子/躲掩体可以甩脱")]
     public float loseSightDelay = 2.5f;
 
+    [Header("受击警觉")]
+    [Tooltip("被攻击后多久内无视视线规则、始终知道玩家位置（秒）")]
+    public float alertMemory = 6f;
+
     [Tooltip("Animator 里攻击状态的 Tag（Attack/Attack2 都打这个 tag），用于判断'攻击动作是否还在播'")]
     public string attackStateTag = "Attack";
 
@@ -92,6 +96,9 @@ public abstract class EnemyController : MonoBehaviour
 
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
 
+    // 被攻击后的"强制警觉"截止时间
+    private float _alertUntil;
+
     /// <summary>子类指定出生时进入哪个状态。</summary>
     protected abstract EnemyState InitialState { get; }
 
@@ -121,6 +128,55 @@ public abstract class EnemyController : MonoBehaviour
         deadState = CreateDeadState();
 
         SwitchState(InitialState);
+    }
+
+    protected virtual void OnEnable()
+    {
+        // Reaction 在 Awake 里赋值，OnEnable 一定在其后执行
+        if (Reaction != null) Reaction.Hit += HandleHit;
+    }
+
+    protected virtual void OnDisable()
+    {
+        if (Reaction != null) Reaction.Hit -= HandleHit;
+    }
+
+    /// <summary>
+    /// 被攻击：立刻"知道"玩家在哪，并打断站岗/回位。
+    /// 这里是逻辑上的发现 —— 视觉上的转身由 NavMeshAgent 自然完成。
+    /// </summary>
+    private void HandleHit(GameObject source)
+    {
+        _alertUntil = Time.time + Mathf.Max(0f, alertMemory);
+
+        if (CurrentStateId == EnemyState.GUARD || CurrentStateId == EnemyState.RETURN)
+            SwitchState(EnemyState.CHASE);
+
+        // TODO: 令牌系统接入后在这里给"反击权"
+        // CombatDirector.Instance?.ForceGrant(this);
+    }
+
+    /// <summary>是否处于"被打了"的强制警觉期。</summary>
+    public bool IsAlerted => Time.time < _alertUntil;
+
+    /// <summary>
+    /// 是否知道玩家位置。三种来源：
+    ///   ① 被攻击后的警觉期（无视视线）
+    ///   ② 正常视野判断
+    /// 状态机统一用这个，而不是直接调 Perception。
+    /// </summary>
+    public bool KnowsPlayer(out float distance)
+    {
+        distance = float.MaxValue;
+        if (Player == null) return false;
+
+        if (IsAlerted)
+        {
+            distance = Vector3.Distance(transform.position, Player.position);
+            return true;
+        }
+
+        return Perception != null && Perception.CanSeePlayer(out distance);
     }
 
     /// <summary>状态工厂：子类可以换成自己的状态实现。</summary>

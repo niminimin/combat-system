@@ -1144,6 +1144,7 @@ MonoBehaviour:
   attackInterval: 0.5
   leashRange: 12
   loseSightDelay: 2.5
+  alertMemory: 6
   attackStateTag: Attack
   reactionStateName: Impact
   maxComboCount: 2
@@ -1469,6 +1470,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 0}
   hitTrigger: Impact
+  hitStateName: Impact
   reactionDuration: 0.45
   logHits: 1
 --- !u!1001 &1930900781

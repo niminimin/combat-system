@@ -30,6 +30,9 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
 
     public bool IsReacting => Time.time < _reactionUntil;
 
+    /// <summary>被命中时触发，参数是发起攻击的物体（通常是玩家的剑）。</summary>
+    public event System.Action<GameObject> Hit;
+
     private void Awake()
     {
         if (animator == null) animator = GetComponentInChildren<Animator>();
@@ -45,6 +48,8 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
             animator.SetTrigger(_triggerHash);
 
         _reactionUntil = Time.time + reactionDuration;
+
+        Hit?.Invoke(source);   // 通知状态机：被打 → 立刻发现攻击者
 
         if (logHits)
             Debug.Log($"[{nameof(EnemyHitReaction)}] {name} 被 {source.name} 命中", this);

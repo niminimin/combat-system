@@ -44,9 +44,10 @@ public class ChaseState : BaseState
             return;
         }
 
-        // ③ 跟丢计时：看不到玩家就累计，重新看到就清零
+        // ③ 跟丢计时：看不见玩家就累计，重新看见就清零
+        //    （被攻击后的警觉期内 KnowsPlayer 恒为 true，所以不会跟丢）
         float seenDistance;
-        if (owner.Perception.CanSeePlayer(out seenDistance))
+        if (owner.KnowsPlayer(out seenDistance))
             lostSightTimer = 0f;
         else
             lostSightTimer += Time.deltaTime;

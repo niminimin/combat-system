@@ -16,7 +16,7 @@ public class ReturnState : BaseState
     public override void LogicUpdate(EnemyController owner)
     {
         float distance;
-        if (owner.Perception.CanSeePlayer(out distance))
+        if (owner.KnowsPlayer(out distance))
         {
             owner.SwitchState(EnemyState.CHASE);
             return;

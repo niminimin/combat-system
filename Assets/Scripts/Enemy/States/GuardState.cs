@@ -18,8 +18,9 @@ public class GuardState : BaseState
         // 原地缓慢转身，显得"在警戒"（纯表现，不影响逻辑）
         owner.transform.Rotate(0f, owner.guardTurnSpeed * Time.deltaTime, 0f, Space.World);
 
+        // 视觉发现，或被打后（警觉期）立刻进入战斗
         float distance;
-        if (owner.Perception.CanSeePlayer(out distance))
+        if (owner.KnowsPlayer(out distance))
             owner.SwitchState(EnemyState.CHASE);
     }
 }
