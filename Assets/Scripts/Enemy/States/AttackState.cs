@@ -27,10 +27,14 @@ public class AttackState : BaseState
         owner.Locomotion.Stop();
         if (owner.Player != null) owner.FaceTarget(owner.Player.position);
 
-        // 本轮连招结束后的间隔（下一轮攻击才用得上）
-        owner.NextAttackTime = Time.time + Mathf.Max(owner.attackInterval, 0f);
-
         if (owner.Attack != null) owner.Attack.TryAttack();
+    }
+
+    public override void OnExit(EnemyController owner)
+    {
+        // 连招真正结束时才开始计间隔。
+        // 否则攻击一开始就记账，等连招（可能 2~3 秒）打完，间隔早已过期 → 毫无停顿。
+        owner.NextAttackTime = Time.time + Mathf.Max(owner.attackInterval, 0f);
     }
 
     public override void LogicUpdate(EnemyController owner)
