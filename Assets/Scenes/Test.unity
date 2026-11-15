@@ -452,11 +452,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hitbox: {fileID: 479018618}
-  attackController: {fileID: 0}
+  attackController: {fileID: 1484661159}
   targetLayers:
     serializedVersion: 2
     m_Bits: 512
-  hitWindowDuration: 0.12
   sizeMultiplier: 1.2
   maxTargetsPerSwing: 8
   logHits: 1
@@ -1321,9 +1320,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 2042969951}
-  attackStateName: Attack
+  combo:
+  - {fileID: 11400000, guid: fea9fda04c967084297bb4bc73ddd50a, type: 2}
   fallbackDuration: 1.5
-  cooldown: 0.35
   bufferNextAttack: 1
   releaseNormalizedTime: 0.95
 --- !u!1001 &1930900781

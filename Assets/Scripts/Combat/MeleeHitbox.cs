@@ -2,20 +2,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 近战武器命中检测。
+/// 近战武器命中检测（数据驱动版）。
 ///
-/// 判定方式：**不是物理碰撞**，而是"命中窗口内每帧做一次 OverlapBox 查询"。
+/// 判定窗口来自 <see cref="AttackDefinition"/>（占动画时长的百分比），
+/// 不再依赖动画事件。每帧查询攻击进度，落在窗口内才做几何检测。
+///
+/// 判定方式：**不是物理碰撞**，而是"窗口内每帧做一次 OverlapBox 查询"。
 /// 武器上的 Collider 仅作为形状/尺寸参考（isTrigger，不产生物理推挤）。
 ///
-/// 为什么用窗口而不是单帧：
-///   挥砍是一个过程，刀从一侧扫到另一侧。若只在某一帧采样，
-///   敌人刚好卡在两帧之间或距离稍远就会漏判，表现为"明明砍到了却没反应"。
-///   改成在窗口内每帧采样 + 单次挥击去重，判定就跟得上刀的真实轨迹。
-///
-/// 为什么用 OverlapBox 而不是 OnTriggerEnter：
-///   · 不需要给武器加 Rigidbody（加了会被物理系统干扰）
-///   · 命中时机完全由攻击流程控制
-///   · 结果确定，便于调试
+/// 为什么用进度轮询而不是动画事件：
+///   · 判定窗口是一个区间，事件只能表达瞬间
+///   · normalizedTime 跟随动画，变速/顿帧/换动画都自动对齐
+///   · 窗口值放在 SO 里，可被玩家和敌人复用
 /// </summary>
 [DisallowMultipleComponent]
 public class MeleeHitbox : MonoBehaviour
@@ -31,9 +29,6 @@ public class MeleeHitbox : MonoBehaviour
     [Tooltip("只检测这些层上的碰撞体，默认只查 Enemy 层")]
     [SerializeField] private LayerMask targetLayers;
 
-    [Tooltip("命中窗口时长（秒）。动画事件触发后，在这段时间内每帧检测一次")]
-    [SerializeField, Min(0f)] private float hitWindowDuration = 0.12f;
-
     [Tooltip("判定盒放大倍数。1 = 与武器完全一致；动作游戏通常放大 10%~30% 更符合手感")]
     [SerializeField, Min(1f)] private float sizeMultiplier = 1.2f;
 
@@ -45,9 +40,6 @@ public class MeleeHitbox : MonoBehaviour
 
     // 同一次挥击内不重复命中同一个碰撞体
     private readonly HashSet<Collider> _hitThisSwing = new HashSet<Collider>();
-
-    private float _windowUntil;
-    private bool _windowOpen;
 
     /// <summary>命中某个碰撞体时触发。</summary>
     public event System.Action<Collider> OnHitSomething;
@@ -67,39 +59,28 @@ public class MeleeHitbox : MonoBehaviour
     {
         if (attackController == null) return;
         attackController.AttackStarted += HandleAttackStarted;
-        attackController.HitFrame += HandleHitFrame;
     }
 
     private void OnDisable()
     {
         if (attackController == null) return;
         attackController.AttackStarted -= HandleAttackStarted;
-        attackController.HitFrame -= HandleHitFrame;
     }
 
     private void HandleAttackStarted()
     {
-        _hitThisSwing.Clear();
-        _windowOpen = false;
-    }
-
-    /// <summary>动画命中帧：打开命中窗口。</summary>
-    private void HandleHitFrame()
-    {
-        _windowUntil = Time.time + hitWindowDuration;
-        _windowOpen = true;
-        TryDetect();          // 当帧立刻检测一次
+        _hitThisSwing.Clear();   // 新的一次挥击，重新记录
     }
 
     private void Update()
     {
-        if (!_windowOpen) return;
+        if (!attackController.IsAttacking) return;
 
-        if (Time.time > _windowUntil)
-        {
-            _windowOpen = false;
-            return;
-        }
+        AttackDefinition def = attackController.CurrentAttack;
+        if (def == null) return;
+
+        float t = attackController.CurrentNormalizedTime;
+        if (t < def.hitWindowStart || t > def.hitWindowEnd) return;
 
         TryDetect();
     }
@@ -121,7 +102,7 @@ public class MeleeHitbox : MonoBehaviour
         foreach (var c in hits)
         {
             if (c == null) continue;
-            if (!_hitThisSwing.Add(c)) continue;
+            if (!_hitThisSwing.Add(c)) continue;   // 本次挥击已经打过
 
             var reaction = c.GetComponentInParent<EnemyHitReaction>();
             if (reaction == null) continue;
