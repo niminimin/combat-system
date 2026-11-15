@@ -52,11 +52,18 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("丢失视野多久后放弃追击（秒）。绕柱子/躲掩体可以甩脱")]
     public float loseSightDelay = 2.5f;
 
-    [Tooltip("Animator 里攻击状态的名字，用于判断'攻击动作是否还在播'")]
-    public string attackStateName = "Attack";
+    [Tooltip("Animator 里攻击状态的 Tag（Attack/Attack2 都打这个 tag），用于判断'攻击动作是否还在播'")]
+    public string attackStateTag = "Attack";
 
     [Tooltip("Animator 里受击状态的名字，用于判断'受击动画是否还在播'")]
     public string reactionStateName = "Impact";
+
+    [Header("连招")]
+    [Tooltip("一次连招最多连续打几段（受 AttackController.combo 长度限制）")]
+    [Min(1)] public int maxComboCount = 2;
+
+    [Tooltip("打完一段后继续接下一段的概率（1 = 必定连）")]
+    [Range(0f, 1f)] public float comboChance = 1f;
 
     /// <summary>下一次允许攻击的时间（时间戳）。由 AttackState 写入，ChaseState 读取。</summary>
     public float NextAttackTime { get; set; }
@@ -65,7 +72,7 @@ public abstract class EnemyController : MonoBehaviour
     public bool IsAttackAnimationPlaying()
     {
         if (Animator == null) return false;
-        return Animator.GetCurrentAnimatorStateInfo(0).IsName(attackStateName);
+        return Animator.GetCurrentAnimatorStateInfo(0).IsTag(attackStateTag);
     }
 
     /// <summary>出生点快照（存值，不存 Transform 引用）。</summary>

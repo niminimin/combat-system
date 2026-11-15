@@ -1110,6 +1110,7 @@ MonoBehaviour:
   animator: {fileID: 1113164294}
   combo:
   - {fileID: 11400000, guid: fea9fda04c967084297bb4bc73ddd50a, type: 2}
+  - {fileID: 11400000, guid: 37856b8624d8f2b43aa600ce848a2dc8, type: 2}
   fallbackDuration: 1.5
   bufferNextAttack: 1
   releaseNormalizedTime: 0.95
@@ -1134,8 +1135,10 @@ MonoBehaviour:
   attackInterval: 1.2
   leashRange: 12
   loseSightDelay: 2.5
-  attackStateName: Attack
+  attackStateTag: Attack
   reactionStateName: Impact
+  maxComboCount: 2
+  comboChance: 1
 --- !u!195 &1113164300
 NavMeshAgent:
   m_ObjectHideFlags: 0
