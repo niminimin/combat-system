@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// 近战武器命中检测（数据驱动版）。
 ///
-/// 判定窗口来自 <see cref="AttackDefinition"/>（占动画时长的百分比），
+/// 判定窗口来自 <see cref="AttackDefinitionSO"/>（占动画时长的百分比），
 /// 不再依赖动画事件。每帧查询攻击进度，落在窗口内才做几何检测。
 ///
 /// 判定方式：**不是物理碰撞**，而是"窗口内每帧做一次 OverlapBox 查询"。
@@ -76,7 +76,7 @@ public class MeleeHitbox : MonoBehaviour
     {
         if (!attackController.IsAttacking) return;
 
-        AttackDefinition def = attackController.CurrentAttack;
+        AttackDefinitionSO def = attackController.CurrentAttack;
         if (def == null) return;
 
         float t = attackController.CurrentNormalizedTime;

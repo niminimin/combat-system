@@ -4,11 +4,11 @@ using UnityEngine;
 /// 通用攻击控制器：播放攻击动画 + 冷却 + 连招缓冲 + 进度查询。
 ///
 /// 数据驱动：每段攻击的参数（动画状态、判定窗口、伤害、冷却）来自
-/// AttackDefinition 资产，代码里不再硬编码这些值。
+/// AttackDefinitionSO 资产，代码里不再硬编码这些值。
 ///
 /// 设计原则（为敌人复用）：
 ///   · 不读任何 Input —— 玩家输入在 PlayerAttackInput，敌人由 AI 调用 TryAttack()
-///   · 只依赖 Animator + AttackDefinition
+///   · 只依赖 Animator + AttackDefinitionSO
 ///   · 通过事件广播开始/结束；判定窗口由外部查询 CurrentNormalizedTime 得到
 /// </summary>
 [DisallowMultipleComponent]
@@ -20,7 +20,7 @@ public class AttackController : MonoBehaviour
 
     [Header("攻击数据（多段则按数组顺序连招）")]
     [Tooltip("每个元素是一段攻击的 ScriptableObject 定义")]
-    [SerializeField] private AttackDefinition[] combo;
+    [SerializeField] private AttackDefinitionSO[] combo;
 
     [Tooltip("找不到状态时长时的兜底时长（秒），防止卡在攻击中")]
     [SerializeField, Min(0.1f)] private float fallbackDuration = 1.5f;
@@ -36,7 +36,7 @@ public class AttackController : MonoBehaviour
     public bool IsAttacking { get; private set; }
 
     /// <summary>当前（或最近一次）攻击的数据定义。</summary>
-    public AttackDefinition CurrentAttack { get; private set; }
+    public AttackDefinitionSO CurrentAttack { get; private set; }
 
     /// <summary>
     /// 当前攻击动画的播放进度（0~1）。不在攻击状态时为 0。
@@ -63,7 +63,7 @@ public class AttackController : MonoBehaviour
 
     /// <summary>
     /// 表现用事件：动画里的 Animation Event "OnHitEvent" 会转发到这里。
-    /// 注意：判定不再依赖它，判定窗口由 AttackDefinition 决定。
+    /// 注意：判定不再依赖它，判定窗口由 AttackDefinitionSO 决定。
     /// 保留它是为了以后放刀光/音效时，仍能在动画帧上精确挂表现。
     /// </summary>
     public event System.Action HitFrame;
@@ -123,7 +123,7 @@ public class AttackController : MonoBehaviour
         return true;
     }
 
-    private AttackDefinition GetCurrentDefinition()
+    private AttackDefinitionSO GetCurrentDefinition()
     {
         if (combo == null || combo.Length == 0) return null;
         int index = Mathf.Clamp(_comboIndex, 0, combo.Length - 1);
@@ -132,7 +132,7 @@ public class AttackController : MonoBehaviour
 
     private void StartAttack()
     {
-        AttackDefinition def = GetCurrentDefinition();
+        AttackDefinitionSO def = GetCurrentDefinition();
         if (def == null) return;
 
         CurrentAttack = def;

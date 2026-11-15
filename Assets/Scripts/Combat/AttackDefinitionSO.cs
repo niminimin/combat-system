@@ -17,7 +17,7 @@ using UnityEngine;
 /// 这样换动画（快版/慢版）、改播放速度时都不用重新调。
 /// </summary>
 [CreateAssetMenu(menuName = "Combat/Attack Definition", fileName = "NewAttack")]
-public class AttackDefinition : ScriptableObject
+public class AttackDefinitionSO : ScriptableObject
 {
     [Header("动画")]
     [Tooltip("Animator 里的状态名，攻击时直接 Play 这个状态")]
