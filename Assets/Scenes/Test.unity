@@ -451,12 +451,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d481cd505c14354da29d6bad68de200, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  source: 0
   hitbox: {fileID: 479018618}
+  sizeMultiplier: 1.2
+  reach: 1.6
+  width: 1.2
+  height: 1.4
+  centerHeight: 1
   attackController: {fileID: 1484661159}
   targetLayers:
     serializedVersion: 2
     m_Bits: 512
-  sizeMultiplier: 1.2
   maxTargetsPerSwing: 8
   logHits: 1
 --- !u!1 &648411604 stripped
@@ -1042,6 +1047,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1113164298}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bb1146e707cc16e488de540ed9573e1e,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1113164301}
   m_SourcePrefab: {fileID: 100100000, guid: bb1146e707cc16e488de540ed9573e1e, type: 3}
 --- !u!1 &1113164293 stripped
 GameObject:
@@ -1162,6 +1171,31 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &1113164301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1113164293}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d481cd505c14354da29d6bad68de200, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  source: 1
+  hitbox: {fileID: 0}
+  sizeMultiplier: 1.2
+  reach: 2
+  width: 1.4
+  height: 1.4
+  centerHeight: 1
+  attackController: {fileID: 1113164298}
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  maxTargetsPerSwing: 2
+  logHits: 1
 --- !u!1 &1472028809
 GameObject:
   m_ObjectHideFlags: 0
@@ -1294,6 +1328,7 @@ GameObject:
   - component: {fileID: 1484661159}
   - component: {fileID: 1484661158}
   - component: {fileID: 1484661160}
+  - component: {fileID: 1484661161}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -1347,6 +1382,7 @@ MonoBehaviour:
   animator: {fileID: 2042969951}
   animSpeedDamp: 0.1
   attackController: {fileID: 1484661159}
+  hitReaction: {fileID: 0}
 --- !u!143 &1484661157
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1419,6 +1455,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a572997b75bce6d46b7c413dea671a3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1484661161
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484661151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3715955d05b7fe54fa61df0d89a01633, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  animator: {fileID: 0}
+  hitTrigger: Impact
+  reactionDuration: 0.45
+  logHits: 1
 --- !u!1001 &1930900781
 PrefabInstance:
   m_ObjectHideFlags: 0

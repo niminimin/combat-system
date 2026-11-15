@@ -67,6 +67,9 @@ public class ThirdPersonMotor : MonoBehaviour
     [Tooltip("攻击期间锁住移动（留空则自动查找同物体上的 AttackController）")]
     [SerializeField] private AttackController attackController;
 
+    [Tooltip("受击硬直期间锁住移动（留空则自动查找同物体上的 PlayerHitReaction）")]
+    [SerializeField] private PlayerHitReaction hitReaction;
+
     // 参数哈希：比每帧传字符串快，也避免拼写错误
     private static readonly int SpeedParamHash = Animator.StringToHash("Speed");
 
@@ -101,6 +104,7 @@ public class ThirdPersonMotor : MonoBehaviour
         if (animator == null) animator = GetComponentInChildren<Animator>();
 
         if (attackController == null) attackController = GetComponent<AttackController>();
+        if (hitReaction == null) hitReaction = GetComponent<PlayerHitReaction>();
 
         if (alignVisualOnAwake) AlignVisualToGround();
     }
@@ -138,6 +142,13 @@ public class ThirdPersonMotor : MonoBehaviour
         // 攻击期间不接受移动输入（重力/贴地仍然生效），
         // 判定来自通用的 AttackController，与"是不是玩家"无关
         if (attackController != null && attackController.IsAttacking)
+        {
+            input = Vector2.zero;
+            sprinting = false;
+        }
+
+        // 受击硬直期间也锁住移动
+        if (hitReaction != null && hitReaction.IsReacting)
         {
             input = Vector2.zero;
             sprinting = false;

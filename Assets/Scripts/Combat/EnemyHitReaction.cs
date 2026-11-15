@@ -9,7 +9,7 @@ using UnityEngine;
 /// 之后要扩展血量/死亡/击退，都往这个组件里加即可，命中方不用改。
 /// </summary>
 [DisallowMultipleComponent]
-public class EnemyHitReaction : MonoBehaviour
+public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
 {
     [Tooltip("留空则自动在子物体中查找 Animator")]
     [SerializeField] private Animator animator;
