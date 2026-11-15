@@ -28,14 +28,43 @@ public class EnemyPerception : MonoBehaviour
     [Tooltip("遮挡检测层：默认检测所有层，命中非玩家就算被挡住")]
     public LayerMask obstacleMask = ~0;
 
-    /// <summary>场景里的玩家（按 Tag 查找，只找一次）。</summary>
-    public Transform Player { get; private set; }
+    private Transform _player;
+    private float _nextLookupTime;
 
-    private void Awake()
+    /// <summary>
+    /// 玩家引用。惰性解析：
+    ///   ① 优先读 GameManager.Player（由 PlayerIdentity 注册）
+    ///   ② 没有 Manager 就按 Tag 查找
+    ///   ③ 找不到时每秒重试一次（覆盖"玩家晚于敌人生成"的情况）
+    /// </summary>
+    public Transform Player
     {
+        get
+        {
+            if (_player != null) return _player;              // 已有（Unity 假 null 会正确判 false）
+            if (Time.time < _nextLookupTime) return null;     // 节流，避免每帧全局搜索
+            _nextLookupTime = Time.time + 1f;
+            _player = ResolvePlayer();
+            return _player;
+        }
+    }
+
+    // Start 在"所有 Awake 之后"执行，能拿到在 Awake 里注册的 GameManager
+    private void Start()
+    {
+        _player = ResolvePlayer();
+
+        if (_player == null)
+            Debug.LogWarning($"[{nameof(EnemyPerception)}] 找不到玩家，敌人会一直站岗（之后每秒重试一次）。", this);
+    }
+
+    private Transform ResolvePlayer()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.Player != null)
+            return GameManager.Instance.Player;
+
         GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        if (playerObject != null) Player = playerObject.transform;
-        else Debug.LogWarning($"[{nameof(EnemyPerception)}] 场景里找不到 Tag=Player 的物体，敌人不会主动发现玩家。", this);
+        return playerObject != null ? playerObject.transform : null;
     }
 
     /// <summary>能否看到玩家；<paramref name="distance"/> 输出平面距离。</summary>
