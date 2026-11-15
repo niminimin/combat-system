@@ -1,13 +1,16 @@
 using UnityEngine;
 
 /// <summary>
-/// 攻击：停下、面向玩家、发起攻击；打完有机会**立刻接下一段连招**。
+/// 攻击：停下、面向玩家、发起攻击；打完可接下一段连招。
 ///
-/// 连招的关键：必须在上一段结束后的 comboResetDelay 窗口内再次 TryAttack，
-/// 否则 AttackController 会把索引归零。所以这里是"攻击一结束就立刻接"，
-/// 而不是回 CHASE 再切回来（那要等 attackInterval，早就超时了）。
+/// 三个时间参数的分工：
+///   · comboInterval（本状态用）：同一轮连招里，两刀之间的间隔
+///   · comboResetDelay（AttackController）：超过这个时间就不再算续招
+///       —— 所以 comboInterval 必须比它小，否则第二刀会被判定为"重新开始"
+///   · attackInterval（离开本状态时计时）：两轮攻击之间的停顿
 ///
-/// 一轮连招打完后才回 CHASE，下一轮的间隔由 NextAttackTime 控制。
+/// 还必须等攻击动画真正离开 Attack/Attack2 状态才切走，
+/// 否则 FSM 先移动、动画还在收招 → "挥着刀平移"。
 /// </summary>
 public class AttackState : BaseState
 {
@@ -15,7 +18,8 @@ public class AttackState : BaseState
     private const float MaxWaitForAnimation = 2.5f;
 
     private float enterTime;
-    private int comboStep;      // 本轮连招已经打了几段
+    private int comboStep;               // 本轮连招已经打了几段
+    private float attackEndedAt = -1f;   // 上一刀完全播完的时刻
 
     public override EnemyState Id => EnemyState.ATTACK;
 
@@ -23,6 +27,7 @@ public class AttackState : BaseState
     {
         enterTime = Time.time;
         comboStep = 0;
+        attackEndedAt = -1f;
 
         owner.Locomotion.Stop();
         if (owner.Player != null) owner.FaceTarget(owner.Player.position);
@@ -32,36 +37,54 @@ public class AttackState : BaseState
 
     public override void OnExit(EnemyController owner)
     {
-        // 连招真正结束时才开始计间隔。
-        // 否则攻击一开始就记账，等连招（可能 2~3 秒）打完，间隔早已过期 → 毫无停顿。
+        // 连招真正结束时才开始计间隔（否则连招本身就把间隔吃掉了）
         owner.NextAttackTime = Time.time + Mathf.Max(owner.attackInterval, 0f);
     }
 
     public override void LogicUpdate(EnemyController owner)
     {
         // 攻击逻辑还在进行 → 等
-        if (owner.Attack != null && owner.Attack.IsAttacking) return;
+        if (owner.Attack != null && owner.Attack.IsAttacking)
+        {
+            attackEndedAt = -1f;
+            return;
+        }
 
         // 攻击动作还在播（含收招混合）→ 等，避免边挥刀边移动
-        if (owner.IsAttackAnimationPlaying() && Time.time - enterTime < MaxWaitForAnimation) return;
+        if (owner.IsAttackAnimationPlaying() && Time.time - enterTime < MaxWaitForAnimation)
+        {
+            attackEndedAt = -1f;
+            return;
+        }
 
-        // 被打断过 → 这次不要再接连招，直接回到追击
+        // 被打断过 → 这次不要再接连招
         if (owner.StaggeredThisState)
         {
             owner.SwitchState(EnemyState.CHASE);
             return;
         }
 
-        // 尝试连招：没打满段数、且随机判定通过 → 立刻接下一段
+        // 记下"这一刀播完"的时刻（只记一次）
+        if (attackEndedAt < 0f) attackEndedAt = Time.time;
+
+        // 等够两刀之间的间隔
+        float wait = owner.comboInterval;
+        if (owner.Attack != null)
+            wait = Mathf.Min(wait, Mathf.Max(0f, owner.Attack.ComboResetDelay - 0.05f));
+
+        if (Time.time - attackEndedAt < wait) return;
+
+        // 尝试连招
         if (owner.Attack != null
             && comboStep + 1 < owner.maxComboCount
             && Random.value <= owner.comboChance)
         {
             comboStep++;
             enterTime = Time.time;
+            attackEndedAt = -1f;
             if (owner.Player != null) owner.FaceTarget(owner.Player.position);
 
-            owner.Attack.TryAttack();   // 间隔≈0，落在 comboResetDelay 窗口内 → 索引前进
+            owner.Attack.TryAttack();
 
             if (owner.Attack.IsAttacking) return;   // 接上了，继续留在 ATTACK
         }

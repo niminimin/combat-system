@@ -65,6 +65,9 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("打完一段后继续接下一段的概率（1 = 必定连）")]
     [Range(0f, 1f)] public float comboChance = 1f;
 
+    [Tooltip("连招内两刀之间的间隔（秒）。必须小于 AttackController 的 comboResetDelay(0.8s)，否则连招会断开")]
+    [Min(0f)] public float comboInterval = 0.15f;
+
     /// <summary>下一次允许攻击的时间（时间戳）。由 AttackState 写入，ChaseState 读取。</summary>
     public float NextAttackTime { get; set; }
 

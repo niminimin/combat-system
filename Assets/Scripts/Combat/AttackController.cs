@@ -59,6 +59,9 @@ public class AttackController : MonoBehaviour
     /// <summary>冷却是否结束（不代表不在攻击中）。</summary>
     public bool IsReady => Time.time >= _readyTime;
 
+    /// <summary>连招窗口：上一段结束后多久内再次攻击才算"续招"。</summary>
+    public float ComboResetDelay => comboResetDelay;
+
     /// <summary>攻击开始（动画已触发）。</summary>
     public event System.Action AttackStarted;
 

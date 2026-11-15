@@ -1132,13 +1132,14 @@ MonoBehaviour:
   chaseSpeed: 4.5
   returnSpeed: 2.5
   guardTurnSpeed: 20
-  attackInterval: 1.2
+  attackInterval: 0.5
   leashRange: 12
   loseSightDelay: 2.5
   attackStateTag: Attack
   reactionStateName: Impact
   maxComboCount: 2
   comboChance: 1
+  comboInterval: 0.15
 --- !u!195 &1113164300
 NavMeshAgent:
   m_ObjectHideFlags: 0
