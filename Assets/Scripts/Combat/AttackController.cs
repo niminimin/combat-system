@@ -32,6 +32,10 @@ public class AttackController : MonoBehaviour
     [Tooltip("动画播到该进度（0~1）就解除攻击状态，允许移动")]
     [SerializeField, Range(0.1f, 1f)] private float releaseNormalizedTime = 0.95f;
 
+    [Header("连招")]
+    [Tooltip("上一段攻击结束后，在这个时间内再次攻击才会接下一段；超过则从第一段重新开始")]
+    [SerializeField, Min(0f)] private float comboResetDelay = 0.8f;
+
     /// <summary>是否正在攻击。</summary>
     public bool IsAttacking { get; private set; }
 
@@ -73,6 +77,7 @@ public class AttackController : MonoBehaviour
     private bool _queued;
     private bool _sawAttackState;
     private int _comboIndex;
+    private float _lastAttackEndTime = float.NegativeInfinity;
 
     private void Awake()
     {
@@ -119,8 +124,27 @@ public class AttackController : MonoBehaviour
             return false;
         }
 
+        AdvanceOrResetCombo();
         StartAttack();
         return true;
+    }
+
+    /// <summary>
+    /// 决定这一次攻击用第几段：
+    ///   · 若距离上一次攻击结束的时间 ≤ comboResetDelay → 进入下一段（续招）
+    ///   · 否则 → 回到第一段（断开连招）
+    /// </summary>
+    private void AdvanceOrResetCombo()
+    {
+        int length = combo != null ? combo.Length : 0;
+        if (length <= 1)
+        {
+            _comboIndex = 0;
+            return;
+        }
+
+        bool withinComboWindow = (Time.time - _lastAttackEndTime) <= comboResetDelay;
+        _comboIndex = withinComboWindow ? (_comboIndex + 1) % length : 0;
     }
 
     private AttackDefinitionSO GetCurrentDefinition()
@@ -149,22 +173,21 @@ public class AttackController : MonoBehaviour
         animator.Play(def.animatorState, 0, 0f);
 
         AttackStarted?.Invoke();
-
-        // 连招推进：按数组顺序循环
-        if (combo != null && combo.Length > 1)
-            _comboIndex = (_comboIndex + 1) % combo.Length;
+        // 注意：连招索引的推进不在这里做，而是在 TryAttack 里按时间窗口决定
+        // （见 AdvanceOrResetCombo）。
     }
 
     private void FinishAttack()
     {
         if (!IsAttacking) return;
         IsAttacking = false;
+        _lastAttackEndTime = Time.time;   // 连招窗口从这里开始计时
         AttackFinished?.Invoke();
 
         if (_queued)
         {
             _queued = false;
-            TryAttack();
+            TryAttack();                  // 缓冲的输入：间隔≈0，必然落在窗口内
         }
     }
 

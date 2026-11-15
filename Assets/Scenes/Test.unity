@@ -1326,6 +1326,7 @@ MonoBehaviour:
   fallbackDuration: 1.5
   bufferNextAttack: 1
   releaseNormalizedTime: 0.95
+  comboResetDelay: 0.8
 --- !u!1001 &1930900781
 PrefabInstance:
   m_ObjectHideFlags: 0
