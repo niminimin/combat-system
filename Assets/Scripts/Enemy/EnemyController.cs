@@ -44,8 +44,8 @@ public abstract class EnemyController : MonoBehaviour
     public float approachSpeed = 3f;
 
     [Header("后撤")]
-    [Tooltip("攻击结束后向后退开多远（米）")]
-    public float retreatDistance = 1.5f;
+    [Tooltip("攻击结束后向后退开多远（米）。退到 combatRange 就会提前停住，不需要退太远")]
+    public float retreatDistance = 1.2f;
 
     [Tooltip("后撤速度（米/秒）。贴着 Back Walk 的步频设（约 1.1）才不滑步")]
     public float retreatSpeed = 1.1f;

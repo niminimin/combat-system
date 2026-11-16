@@ -72,6 +72,14 @@ public class RetreatState : BaseState
             return;
         }
 
+        // 退到"战斗站位环"就停：不要退过头，否则会掉出 combatRange
+        // （掉出去以后再被玩家拉开一点，就会触发 CHASE 白跑一趟）
+        if (distanceToPlayer >= owner.combatRange)
+        {
+            owner.SwitchState(EnemyState.COMBAT_IDLE);
+            return;
+        }
+
         // 到位 或 超时 → 回战斗待机
         if (owner.Locomotion.HasArrived || Time.time - enterTime > MaxDuration)
         {
