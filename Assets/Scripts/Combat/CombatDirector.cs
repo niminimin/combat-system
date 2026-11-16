@@ -151,6 +151,13 @@ public class CombatDirector : MonoBehaviour
                 {
                     if (logEvents)
                         Debug.Log($"[CombatDirector] {CurrentHolder.name} 被压制 {_holderStunTime:F1}s，放弃令牌");
+
+                    // 关键：放弃的同时开始它的"抢牌冷却"。
+                    // 否则玩家下一刀（0.1 秒后）就能用 ForceGrant 把它塞回去——
+                    // 因为冷却是从"上次成功抢牌"算的，而它持牌期间从不刷新。
+                    foreach (var c in _combatants)
+                        if (c.Enemy == CurrentHolder) { c.LastForceGrantTime = Time.time; break; }
+
                     Revoke(CurrentHolder);
                 }
             }
