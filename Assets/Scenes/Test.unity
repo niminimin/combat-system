@@ -3672,6 +3672,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackCooldown: 1.6
   tokenTimeout: 6
+  maxStunHold: 1.5
+  forceGrantCooldown: 2.5
   logEvents: 1
 --- !u!114 &1969205409
 MonoBehaviour:

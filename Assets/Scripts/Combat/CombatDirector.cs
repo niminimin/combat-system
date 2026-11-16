@@ -27,6 +27,13 @@ public class CombatDirector : MonoBehaviour
     [Tooltip("令牌持有超过这个时间还没交还，视为卡住，强制回收（秒）")]
     [SerializeField, Min(0.5f)] private float tokenTimeout = 6f;
 
+    [Header("压制与抢牌")]
+    [Tooltip("持牌者累计被击硬直超过这个时长，就放弃令牌（秒）。不含弹反硬直")]
+    [SerializeField, Min(0.1f)] private float maxStunHold = 1.5f;
+
+    [Tooltip("同一个敌人两次'被打抢令牌'之间的最小间隔（秒）")]
+    [SerializeField, Min(0f)] private float forceGrantCooldown = 2.5f;
+
     [Header("调试")]
     [SerializeField] private bool logEvents = true;
 
@@ -39,7 +46,8 @@ public class CombatDirector : MonoBehaviour
     private class Combatant
     {
         public EnemyController Enemy;
-        public float LastGrantTime;   // 上次拿到令牌的时刻，越小越优先
+        public float LastGrantTime;        // 上次拿到令牌的时刻，越小越优先
+        public float LastForceGrantTime;   // 上次"被打抢令牌"的时刻
     }
 
     private readonly List<Combatant> _combatants = new List<Combatant>();
@@ -48,6 +56,9 @@ public class CombatDirector : MonoBehaviour
     private readonly List<EnemyController> _pendingForce = new List<EnemyController>();
     private float _nextGrantTime;
     private float _grantTime;
+
+    // 本次持牌期间，持有者累计"被打得动不了"的时长（弹反不计）
+    private float _holderStunTime;
 
     private void Awake()
     {
@@ -116,6 +127,21 @@ public class CombatDirector : MonoBehaviour
             {
                 if (logEvents) Debug.Log($"[CombatDirector] {CurrentHolder.name} 持牌超时，回收");
                 Revoke(CurrentHolder);
+                return;
+            }
+
+            // 累计"被打得动不了"的时长：超过阈值说明它根本打不出来，放弃令牌
+            // 注意用 IsHitStunned（不含弹反）——弹反是玩家的奖励时间
+            if (CurrentHolder.IsHitStunned)
+            {
+                _holderStunTime += Time.deltaTime;
+
+                if (_holderStunTime >= maxStunHold)
+                {
+                    if (logEvents)
+                        Debug.Log($"[CombatDirector] {CurrentHolder.name} 被压制 {_holderStunTime:F1}s，放弃令牌");
+                    Revoke(CurrentHolder);
+                }
             }
             return;
         }
@@ -142,6 +168,7 @@ public class CombatDirector : MonoBehaviour
     {
         CurrentHolder = enemy;
         _grantTime = Time.time;
+        _holderStunTime = 0f;          // 新的一轮，压制计时清零
 
         foreach (var c in _combatants)
             if (c.Enemy == enemy) c.LastGrantTime = Time.time;
@@ -213,6 +240,7 @@ public class CombatDirector : MonoBehaviour
     /// <summary>
     /// 被打时插队抢令牌（反击权）。
     /// · 无视全局冷却
+    /// · 同一个敌人有抢牌间隔（forceGrantCooldown），防止玩家按住一个敌人锁死
     /// · 如果当前有人持牌，先收回
     /// · 如果被打的就是持牌者，不重复授予（他本来就该反击）
     /// </summary>
@@ -223,11 +251,25 @@ public class CombatDirector : MonoBehaviour
 
         if (CurrentHolder == enemy) return;   // 已经是它，无需重复
 
+        // 抢牌间隔：同一个人短时间内不能反复抢
+        Combatant combatant = null;
+        foreach (var c in _combatants)
+            if (c.Enemy == enemy) { combatant = c; break; }
+
+        if (combatant != null && Time.time - combatant.LastForceGrantTime < forceGrantCooldown)
+        {
+            if (logEvents)
+                Debug.Log($"[CombatDirector] {enemy.name} 抢牌冷却中，这次不抢");
+            return;
+        }
+
         if (CurrentHolder != null)
         {
             if (logEvents) Debug.Log($"[CombatDirector] {enemy.name} 被打，收回 {CurrentHolder.name} 的令牌");
             Revoke(CurrentHolder);
         }
+
+        if (combatant != null) combatant.LastForceGrantTime = Time.time;
 
         if (logEvents) Debug.Log($"[CombatDirector] {enemy.name} 被打，插队获得令牌");
         Grant(enemy);

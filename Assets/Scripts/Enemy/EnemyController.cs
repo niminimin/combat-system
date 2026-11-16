@@ -315,9 +315,29 @@ public abstract class EnemyController : MonoBehaviour
             Animator.SetFloat(SpeedHash, Locomotion.CurrentSpeed, 0.1f, Time.deltaTime);
     }
 
+    /// <summary>是否处于"弹反硬直"（玩家的奖励时间）。</summary>
+    public bool IsParryStunned => Time.time < _parryStunUntil;
+
     /// <summary>
-    /// 是否处于受击硬直：受击组件还在计时，或者 Impact 动画还在播。
-    /// （Impact clip 比 reactionDuration 长，所以要同时看动画状态。）
+    /// 是否"被打得动不了"（**不含弹反**）。
+    /// 导演用它累计"被压制时长"：弹反是玩家的收益，不该让敌人丢令牌，
+    /// 否则玩家弹反后根本来不及接连招。
+    /// </summary>
+    public bool IsHitStunned
+    {
+        get
+        {
+            if (IsParryStunned) return false;                       // 弹反期间不算
+            if (Reaction != null && Reaction.IsReacting) return true;
+
+            if (Animator == null) return false;
+            return Animator.GetCurrentAnimatorStateInfo(0).IsName(reactionStateName);
+        }
+    }
+
+    /// <summary>
+    /// 是否处于受击硬直（含弹反）：受击组件还在计时，或者 Impact 动画还在播。
+    /// 用于锁移动/冻结逻辑，是 IsHitStunned 与 IsParryStunned 的并集。
     /// </summary>
     public bool IsStaggered
     {
