@@ -30,6 +30,12 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("进入这个距离就发起攻击")]
     public float attackRange = 1.8f;
 
+    [Tooltip("进入战斗的距离：CHASE 到这么近就切 COMBAT_IDLE")]
+    public float combatRange = 3f;
+
+    [Tooltip("脱离战斗的距离：COMBAT_IDLE 时玩家跑出这个距离就重新追击（必须大于 combatRange，避免抖动）")]
+    public float disengageRange = 4.5f;
+
     [Tooltip("玩家超过这个距离就放弃追击、回位")]
     public float loseTargetDistance = 14f;
 
@@ -90,11 +96,13 @@ public abstract class EnemyController : MonoBehaviour
 
     public BaseState guardState { get; private set; }
     public BaseState chaseState { get; private set; }
+    public BaseState combatIdleState { get; private set; }
     public BaseState attackState { get; private set; }
     public BaseState returnState { get; private set; }
     public BaseState deadState { get; private set; }
 
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int InCombatHash = Animator.StringToHash("InCombat");
 
     // 被攻击后的"强制警觉"截止时间
     private float _alertUntil;
@@ -123,6 +131,7 @@ public abstract class EnemyController : MonoBehaviour
 
         guardState = CreateGuardState();
         chaseState = CreateChaseState();
+        combatIdleState = CreateCombatIdleState();
         attackState = CreateAttackState();
         returnState = CreateReturnState();
         deadState = CreateDeadState();
@@ -182,9 +191,16 @@ public abstract class EnemyController : MonoBehaviour
     /// <summary>状态工厂：子类可以换成自己的状态实现。</summary>
     protected virtual BaseState CreateGuardState() { return new GuardState(); }
     protected virtual BaseState CreateChaseState() { return new ChaseState(); }
+    protected virtual BaseState CreateCombatIdleState() { return new CombatIdleState(); }
     protected virtual BaseState CreateAttackState() { return new AttackState(); }
     protected virtual BaseState CreateReturnState() { return new ReturnState(); }
     protected virtual BaseState CreateDeadState() { return new DeadState(); }
+
+    /// <summary>切换 Animator 的战斗站姿（COMBAT_IDLE 时 true，其余 false）。</summary>
+    public void SetCombatStance(bool inCombat)
+    {
+        if (Animator != null) Animator.SetBool(InCombatHash, inCombat);
+    }
 
     protected virtual void Update()
     {
@@ -253,6 +269,7 @@ public abstract class EnemyController : MonoBehaviour
         {
             case EnemyState.GUARD: return guardState;
             case EnemyState.CHASE: return chaseState;
+            case EnemyState.COMBAT_IDLE: return combatIdleState;
             case EnemyState.ATTACK: return attackState;
             case EnemyState.RETURN: return returnState;
             case EnemyState.DEAD: return deadState;

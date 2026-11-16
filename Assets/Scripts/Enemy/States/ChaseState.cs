@@ -58,15 +58,12 @@ public class ChaseState : BaseState
             return;
         }
 
-        // 进入攻击距离
-        if (distance <= owner.attackRange)
+        // 进入战斗距离 → 停下摆战斗姿势
+        // （ATTACK 暂时不可达，等令牌系统接入后再从这里/COMBAT_IDLE 进入）
+        if (distance <= owner.combatRange)
         {
             owner.Locomotion.Stop();
-            owner.FaceTarget(owner.Player.position);
-
-            if (Time.time < owner.NextAttackTime) return;   // 间隔没到 → 原地对峙
-
-            owner.SwitchState(EnemyState.ATTACK);
+            owner.SwitchState(EnemyState.COMBAT_IDLE);
             return;
         }
 

@@ -4,9 +4,10 @@
 /// </summary>
 public enum EnemyState
 {
-    GUARD,    // 站岗：原地环顾，发现玩家进入 CHASE
-    CHASE,    // 追击：走向玩家，进入攻击距离切 ATTACK
-    ATTACK,   // 攻击：发起一次攻击
-    RETURN,   // 回位：走回出生点
-    DEAD      // 死亡：停止一切行为（后续接死亡动画）
+    GUARD,        // 站岗：原地环顾，发现玩家进入 CHASE
+    CHASE,        // 追击：走向玩家，进入战斗距离切 COMBAT_IDLE
+    COMBAT_IDLE,  // 战斗待机：停在玩家附近摆战斗姿势、面向玩家
+    ATTACK,       // 攻击：发起一次攻击（等令牌系统接入后才可达）
+    RETURN,       // 回位：走回出生点
+    DEAD          // 死亡：停止一切行为（后续接死亡动画）
 }

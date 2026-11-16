@@ -1137,6 +1137,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackRange: 1.8
+  combatRange: 3
+  disengageRange: 4.5
   loseTargetDistance: 14
   chaseSpeed: 4.5
   returnSpeed: 2.5
