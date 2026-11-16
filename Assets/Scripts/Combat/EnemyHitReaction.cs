@@ -57,12 +57,13 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
     /// <summary>被命中时调用（由 MeleeHitbox 触发）。</summary>
     public void OnHit(GameObject source)
     {
+        // 相机抖动每次命中都要有 —— 连招第二刀落在受击动画里也不能没反馈
+        if (CameraShake.Instance != null) CameraShake.Instance.Shake(shakeAmount);
+
+        // 但受击动画不重播：连续命中时让它播完，避免动画一直被第一帧打断
         if (ignoreHitsWhileReacting && IsReacting) return;
 
         PlayImpact();
-
-        // 相机抖动：玩家砍中敌人
-        if (CameraShake.Instance != null) CameraShake.Instance.Shake(shakeAmount);
 
         Hit?.Invoke(source);   // 通知状态机：被打 → 立刻发现攻击者
 

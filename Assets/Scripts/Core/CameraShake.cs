@@ -22,17 +22,17 @@ public class CameraShake : MonoBehaviour
 
     [Header("强度")]
     [Tooltip("强度为 1 时的最大位移（米）")]
-    [SerializeField, Min(0f)] private float maxPositionOffset = 0.12f;
+    [SerializeField, Min(0f)] private float maxPositionOffset = 0.07f;
 
     [Tooltip("强度为 1 时的最大俯仰偏移（度）")]
-    [SerializeField, Min(0f)] private float maxPitchAngle = 0.8f;
+    [SerializeField, Min(0f)] private float maxPitchAngle = 0.45f;
 
     [Tooltip("强度为 1 时的最大滚转偏移（度）")]
-    [SerializeField, Min(0f)] private float maxRollAngle = 1.2f;
+    [SerializeField, Min(0f)] private float maxRollAngle = 0.6f;
 
     [Header("衰减")]
     [Tooltip("每秒衰减多少强度（越大抖得越短）")]
-    [SerializeField, Min(0.1f)] private float decaySpeed = 2.2f;
+    [SerializeField, Min(0.1f)] private float decaySpeed = 3f;
 
     [Tooltip("噪声频率，越大抖得越碎")]
     [SerializeField, Min(1f)] private float noiseFrequency = 30f;
