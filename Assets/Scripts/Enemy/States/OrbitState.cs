@@ -13,6 +13,9 @@ using UnityEngine;
 /// </summary>
 public class OrbitState : BaseState
 {
+    // 目标点沿弧线往前偏多少（弧度）。太小会被 Agent.stoppingDistance 判成"已到达"
+    private const float LookAheadAngle = 0.5f;
+
     private float enterTime;
     private float duration;      // 本次环绕持续多久
     private float direction;     // +1 / -1，绕行方向
@@ -76,11 +79,14 @@ public class OrbitState : BaseState
         float angularSpeed = owner.orbitSpeed / Mathf.Max(owner.orbitRadius, 0.1f);
         angle += direction * angularSpeed * Time.deltaTime;
 
+        // 目标点取"沿弧线往前一点"的位置（约 29°），而不是贴着当前位置。
+        // 否则目标点每帧只挪两厘米，配合 Agent.stoppingDistance 会被判成"已到达"。
+        float aheadAngle = angle + direction * LookAheadAngle;
         Vector3 target = owner.Player.position +
-                         new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * owner.orbitRadius;
+                         new Vector3(Mathf.Cos(aheadAngle), 0f, Mathf.Sin(aheadAngle)) * owner.orbitRadius;
         target.y = owner.transform.position.y;   // 保持自身高度，避免上下坡抖动
 
-        owner.Locomotion.MoveTo(target, owner.orbitSpeed);
+        owner.Locomotion.MoveTo(target, owner.orbitSpeed, 0.1f);
 
         // 身体始终面向玩家（Agent 转向已关闭）
         owner.FaceTarget(owner.Player.position);

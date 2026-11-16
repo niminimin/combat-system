@@ -46,13 +46,22 @@ public class EnemyLocomotion : MonoBehaviour
         Agent.speed = walkSpeed;
     }
 
-    /// <summary>朝目标移动（每帧调用无妨，SetDestination 会自己复用路径）。</summary>
-    public void MoveTo(Vector3 destination, float speed)
+    /// <summary>
+    /// 朝目标移动（每帧调用无妨，SetDestination 会自己复用路径）。
+    /// <paramref name="overrideStoppingDistance"/> 传负数表示用默认的 stopDistance。
+    ///
+    /// 环绕时必须传一个很小的值（如 0.1），因为环绕的目标点每帧只往前挪一两厘米，
+    /// 若沿用 stopDistance(1.2)，Agent 会认为"早已到达"而原地不动。
+    /// </summary>
+    public void MoveTo(Vector3 destination, float speed, float overrideStoppingDistance = -1f)
     {
         if (Agent == null || !Agent.isOnNavMesh) return;
 
         Agent.isStopped = false;
         Agent.speed = speed;
+        Agent.stoppingDistance = overrideStoppingDistance >= 0f
+            ? overrideStoppingDistance
+            : stopDistance;
         Agent.SetDestination(destination);
     }
 
