@@ -46,6 +46,12 @@ public class PlayerParry : MonoBehaviour
     private AttackController _attack;
     private PlayerHitReaction _hitReaction;
 
+    [Tooltip("玩家 Animator（留空自动从子物体查找）")]
+    [SerializeField] private Animator animator;
+
+    [Tooltip("Animator 里的弹反状态名")]
+    [SerializeField] private string parryStateName = "Parry";
+
     /// <summary>当前是否处于弹反窗口内（能弹成功）。</summary>
     public bool IsParrying => Time.time < _parryUntil;
 
@@ -55,6 +61,7 @@ public class PlayerParry : MonoBehaviour
     private void Awake()
     {
         if (orbitCamera == null) orbitCamera = FindObjectOfType<ThirdPersonOrbitCamera>();
+        if (animator == null) animator = GetComponentInChildren<Animator>();
         _attack = GetComponent<AttackController>();
         _hitReaction = GetComponent<PlayerHitReaction>();
     }
@@ -100,7 +107,11 @@ public class PlayerParry : MonoBehaviour
         // ① 最高优先级：打断当前攻击（未结算的伤害作废）
         if (_attack != null) _attack.CancelAttack();
 
-        // ② 立刻转向相机朝向，避免"背对着敌人弹反"的怪异观感
+        // ② 播放弹反动作（放在 CancelAttack 之后，确保它覆盖掉"切回 Locomotion"的请求）
+        if (animator != null && animator.runtimeAnimatorController != null)
+            animator.Play(parryStateName, 0, 0f);
+
+        // ③ 立刻转向相机朝向，避免"背对着敌人弹反"的怪异观感
         Vector3 forward = FacingForward;
         if (forward.sqrMagnitude > 0.0001f)
             transform.rotation = Quaternion.LookRotation(forward, Vector3.up);

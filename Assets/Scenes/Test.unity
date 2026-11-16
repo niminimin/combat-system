@@ -2611,10 +2611,12 @@ MonoBehaviour:
   parryKey: 101
   parryWindow: 0.25
   parryCooldown: 0.6
-  parryActionDuration: 0.35
+  parryActionDuration: 0.45
   facingAngle: 160
   orbitCamera: {fileID: 234868644}
   logParry: 1
+  animator: {fileID: 2042969951}
+  parryStateName: Parry
 --- !u!1001 &1930900781
 PrefabInstance:
   m_ObjectHideFlags: 0
