@@ -65,21 +65,24 @@ public class CameraShake : MonoBehaviour
     {
         if (_trauma <= 0f) return;
 
-        float strength = _trauma * _trauma;      // 平方：衰减尾段更柔和
+        // 线性强度：shakeAmount 0.5 就是最大幅度的一半，调参所见即所得
+        // （之前用 trauma² 会让 0.3 只剩 9%，小幅度完全感觉不到）
+        float strength = _trauma;
         float t = Time.unscaledTime * noiseFrequency;
 
         // 三个通道用不同的噪声采样点，避免位移和旋转完全同步（那样很假）
-        float nx = Mathf.PerlinNoise(t, 0f) - 0.5f;
-        float ny = Mathf.PerlinNoise(0f, t) - 0.5f;
-        float nr = Mathf.PerlinNoise(t, 17.3f) - 0.5f;
+        // Perlin 是 0~1，减 0.5 再乘 2 映射到 -1~1
+        float nx = (Mathf.PerlinNoise(t, 0f) - 0.5f) * 2f;
+        float ny = (Mathf.PerlinNoise(0f, t) - 0.5f) * 2f;
+        float nr = (Mathf.PerlinNoise(t, 17.3f) - 0.5f) * 2f;
 
         // 位移用相机自身的左右/上方向，绕视线的偏移最自然
-        float offset = 2f * maxPositionOffset * strength;
+        float offset = maxPositionOffset * strength;
         transform.position += transform.right * (nx * offset) + transform.up * (ny * offset);
 
         // 旋转：轻微俯仰 + 滚转
-        float pitch = ny * 2f * maxPitchAngle * strength;
-        float roll = nr * 2f * maxRollAngle * strength;
+        float pitch = ny * maxPitchAngle * strength;
+        float roll = nr * maxRollAngle * strength;
         transform.rotation *= Quaternion.Euler(pitch, 0f, roll);
 
         _trauma = Mathf.Max(0f, _trauma - decaySpeed * Time.unscaledDeltaTime);
