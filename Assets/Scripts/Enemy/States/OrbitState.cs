@@ -31,6 +31,9 @@ public class OrbitState : BaseState
     // 持续"没在动"多久就放弃这次环绕
     private const float StuckTimeout = 0.4f;
 
+    // 有槽位时，偏离槽位超过这个角度就结束环绕（度）
+    private const float maxDriftDegrees = 30f;
+
     private float enterTime;
     private float duration;      // 本次环绕持续多久
     private float direction;     // +1 / -1，绕行方向
@@ -93,13 +96,26 @@ public class OrbitState : BaseState
         }
 
         // 推进角度：角速度 = 线速度 / 半径
-        float angularSpeed = owner.orbitSpeed / Mathf.Max(owner.orbitRadius, 0.1f);
+        float radius = owner.HasSlot ? owner.SlotRadius : owner.orbitRadius;
+        float angularSpeed = owner.orbitSpeed / Mathf.Max(radius, 0.1f);
         angle += direction * angularSpeed * Time.deltaTime;
+
+        // 有编队槽位时，偏离槽位超过 maxDrift 就结束（只在自己的小扇形里活动）
+        if (owner.HasSlot)
+        {
+            float drift = Mathf.Abs(Mathf.DeltaAngle(angle * Mathf.Rad2Deg,
+                                                     owner.SlotAngle * Mathf.Rad2Deg));
+            if (drift > maxDriftDegrees)
+            {
+                owner.SwitchState(EnemyState.COMBAT_IDLE);
+                return;
+            }
+        }
 
         // 目标点取"沿弧线往前一点"的位置（约 29°），而不是贴着当前位置
         float aheadAngle = angle + direction * LookAheadAngle;
         Vector3 rawTarget = owner.Player.position +
-                            new Vector3(Mathf.Cos(aheadAngle), 0f, Mathf.Sin(aheadAngle)) * owner.orbitRadius;
+                            new Vector3(Mathf.Cos(aheadAngle), 0f, Mathf.Sin(aheadAngle)) * radius;
         rawTarget.y = owner.transform.position.y;   // 保持自身高度，避免上下坡抖动
 
         // 保险①：目标点必须在 NavMesh 上（玩家站地图边缘时可能落在网格外）

@@ -17,6 +17,14 @@ public class CombatIdleState : BaseState
 
     public override EnemyState Id => EnemyState.COMBAT_IDLE;
 
+    // 偏差超过这个角度（度）就主动挪回槽位
+    private const float RepositionThreshold = 25f;
+
+    // 挪到偏差小于这个角度（度）就算到位
+    private const float SettledAngle = 10f;
+
+    private bool _repositioning;
+
     public override void OnEnter(EnemyController owner)
     {
         owner.Locomotion.Stop();
@@ -25,6 +33,9 @@ public class CombatIdleState : BaseState
 
         // 重新排队：刚赶到 / 刚打完的敌人不该插队
         if (CombatDirector.Instance != null) CombatDirector.Instance.MarkJoined(owner);
+
+        // 离自己的编队槽位太远 → 先走过去（自动散开包围）
+        _repositioning = owner.HasSlot && AngleDeviation(owner) > RepositionThreshold;
 
         ScheduleNextDecision(owner);
     }
@@ -49,7 +60,14 @@ public class CombatIdleState : BaseState
             return;
         }
 
-        // 原地转身，始终面向玩家
+        // 走向自己的槽位（期间不转向玩家：Agent 会朝移动方向转）
+        if (_repositioning)
+        {
+            if (MoveTowardsSlot(owner)) _repositioning = false;
+            return;
+        }
+
+        // 站定：原地转身，始终面向玩家
         owner.FaceTarget(owner.Player.position);
 
         // 到点了：决定站着还是绕一段
@@ -69,5 +87,34 @@ public class CombatIdleState : BaseState
     {
         nextDecisionTime = Time.time +
                            Random.Range(owner.idleTimeRange.x, owner.idleTimeRange.y);
+    }
+
+    /// <summary>当前角度与槽位角度的偏差（度）。</summary>
+    private static float AngleDeviation(EnemyController owner)
+    {
+        if (owner.Player == null) return 0f;
+
+        Vector3 offset = owner.transform.position - owner.Player.position;
+        offset.y = 0f;
+        if (offset.sqrMagnitude < 0.0001f) return 0f;
+
+        float currentDeg = Mathf.Atan2(offset.z, offset.x) * Mathf.Rad2Deg;
+        float slotDeg = owner.SlotAngle * Mathf.Rad2Deg;
+        return Mathf.Abs(Mathf.DeltaAngle(currentDeg, slotDeg));
+    }
+
+    /// <summary>朝自己的槽位走一步，返回是否已经到位。</summary>
+    private static bool MoveTowardsSlot(EnemyController owner)
+    {
+        if (AngleDeviation(owner) <= SettledAngle) return true;
+
+        Vector3 target = owner.Player.position +
+                         new Vector3(Mathf.Cos(owner.SlotAngle), 0f, Mathf.Sin(owner.SlotAngle)) * owner.SlotRadius;
+        target.y = owner.transform.position.y;
+
+        owner.Locomotion.MoveTo(target, owner.orbitSpeed, 0.2f);
+
+        if (owner.Locomotion.HasArrived) return true;
+        return false;
     }
 }

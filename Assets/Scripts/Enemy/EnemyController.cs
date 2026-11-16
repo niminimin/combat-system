@@ -116,6 +116,20 @@ public abstract class EnemyController : MonoBehaviour
         return Animator.GetCurrentAnimatorStateInfo(0).IsTag(attackStateTag);
     }
 
+    // ───────────────────── 编队槽位（由 CombatFormation 写入） ─────────────────────
+
+    /// <summary>槽位索引，-1 表示没有分配。</summary>
+    public int SlotIndex { get; set; } = -1;
+
+    /// <summary>槽位角度（弧度，世界固定）。</summary>
+    public float SlotAngle { get; set; }
+
+    /// <summary>槽位半径（米）。0 表示没有分配槽位。</summary>
+    public float SlotRadius { get; set; }
+
+    /// <summary>是否分配到了编队槽位。</summary>
+    public bool HasSlot => SlotRadius > 0.01f;
+
     /// <summary>出生点快照（存值，不存 Transform 引用）。</summary>
     public Vector3 HomePosition { get; private set; }
     public Quaternion HomeRotation { get; private set; }
@@ -375,8 +389,6 @@ public abstract class EnemyController : MonoBehaviour
     /// </summary>
     private void UpdateCombatRegistration()
     {
-        if (CombatDirector.Instance == null) return;
-
         EnemyState id = CurrentStateId;
         bool inCombat = id == EnemyState.CHASE
                         || id == EnemyState.COMBAT_IDLE
@@ -384,8 +396,19 @@ public abstract class EnemyController : MonoBehaviour
                         || id == EnemyState.ATTACK
                         || id == EnemyState.RETREAT;
 
-        if (inCombat) CombatDirector.Instance.Register(this);
-        else CombatDirector.Instance.Unregister(this);
+        // 令牌名单
+        if (CombatDirector.Instance != null)
+        {
+            if (inCombat) CombatDirector.Instance.Register(this);
+            else CombatDirector.Instance.Unregister(this);
+        }
+
+        // 编队槽位（和令牌名单共用同一个"进出战斗"判断点）
+        if (CombatFormation.Instance != null)
+        {
+            if (inCombat && !HasSlot) CombatFormation.Instance.ClaimSlot(this);
+            else if (!inCombat && HasSlot) CombatFormation.Instance.ReleaseSlot(this);
+        }
     }
 
     // ───────────────────── 令牌（由 CombatDirector 调用） ─────────────────────
