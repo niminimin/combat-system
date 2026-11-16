@@ -23,6 +23,9 @@ public class PlayerParry : MonoBehaviour
     [Tooltip("两次弹反之间的最小间隔（秒）")]
     [SerializeField, Min(0f)] private float parryCooldown = 0.6f;
 
+    [Tooltip("弹反动作锁定时长（秒）：期间不能移动、不能攻击。应大于 parryWindow")]
+    [SerializeField, Min(0f)] private float parryActionDuration = 0.35f;
+
     [Tooltip("攻击者必须在玩家正面这个角度内（度）才算弹反成功")]
     [SerializeField, Range(30f, 360f)] private float facingAngle = 160f;
 
@@ -34,14 +37,26 @@ public class PlayerParry : MonoBehaviour
 
     /// <summary>弹反窗口截止时间。</summary>
     private float _parryUntil;
+
+    /// <summary>弹反动作锁定截止时间（期间禁止移动/攻击）。</summary>
+    private float _actionUntil;
+
     private float _nextParryTime;
 
-    /// <summary>当前是否处于弹反窗口内。</summary>
+    private AttackController _attack;
+    private PlayerHitReaction _hitReaction;
+
+    /// <summary>当前是否处于弹反窗口内（能弹成功）。</summary>
     public bool IsParrying => Time.time < _parryUntil;
+
+    /// <summary>当前是否处于弹反动作锁定中（不能移动/攻击）。</summary>
+    public bool IsParryLocked => Time.time < _actionUntil;
 
     private void Awake()
     {
         if (orbitCamera == null) orbitCamera = FindObjectOfType<ThirdPersonOrbitCamera>();
+        _attack = GetComponent<AttackController>();
+        _hitReaction = GetComponent<PlayerHitReaction>();
     }
 
     /// <summary>
@@ -66,20 +81,31 @@ public class PlayerParry : MonoBehaviour
         if (Input.GetKeyDown(parryKey)) TryParry();
     }
 
-    /// <summary>尝试开启弹反（冷却中则无效）。</summary>
+    /// <summary>
+    /// 尝试开启弹反。优先级最高：
+    ///   · 正在受击硬直 → 无效（受击的优先级更高）
+    ///   · 冷却中 / 已经在弹反动作中 → 无效
+    ///   · 成功时：取消当前攻击 + 锁定移动/攻击
+    /// </summary>
     public bool TryParry()
     {
         if (Time.time < _nextParryTime) return false;
+        if (IsParryLocked) return false;                       // 动作还没结束
+        if (_hitReaction != null && _hitReaction.IsReacting) return false;   // 挨打中不能弹
 
         _parryUntil = Time.time + parryWindow;
+        _actionUntil = Time.time + Mathf.Max(parryWindow, parryActionDuration);
         _nextParryTime = Time.time + parryCooldown;
 
-        // 立刻转向相机朝向，避免"背对着敌人弹反"的怪异观感
+        // ① 最高优先级：打断当前攻击（未结算的伤害作废）
+        if (_attack != null) _attack.CancelAttack();
+
+        // ② 立刻转向相机朝向，避免"背对着敌人弹反"的怪异观感
         Vector3 forward = FacingForward;
         if (forward.sqrMagnitude > 0.0001f)
             transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
 
-        if (logParry) Debug.Log($"[PlayerParry] 开启弹反窗口 {parryWindow:F2}s", this);
+        if (logParry) Debug.Log($"[PlayerParry] 开启弹反窗口 {parryWindow:F2}s，动作锁定 {parryActionDuration:F2}s", this);
         return true;
     }
 

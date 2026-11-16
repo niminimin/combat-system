@@ -13,6 +13,9 @@ public class PlayerAttackInput : MonoBehaviour
 {
     [SerializeField] private AttackController attackController;
 
+    [Tooltip("弹反组件：弹反动作期间禁止攻击（留空自动查找）")]
+    [SerializeField] private PlayerParry parry;
+
     [Tooltip("攻击键（鼠标左键 / 手柄按钮可在 Input Manager 里映射）")]
     [SerializeField] private KeyCode attackKey = KeyCode.Mouse0;
 
@@ -24,10 +27,14 @@ public class PlayerAttackInput : MonoBehaviour
     private void Awake()
     {
         if (attackController == null) attackController = GetComponent<AttackController>();
+        if (parry == null) parry = GetComponent<PlayerParry>();
     }
 
     private void Update()
     {
+        // 弹反动作期间：攻击优先级低于弹反，直接忽略输入
+        if (parry != null && parry.IsParryLocked) return;
+
         if (!Input.GetKeyDown(attackKey)) return;
 
         // 不满足条件时 TryAttack 会自行处理冷却/缓冲

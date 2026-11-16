@@ -2504,6 +2504,7 @@ MonoBehaviour:
   animSpeedDamp: 0.1
   attackController: {fileID: 1484661159}
   hitReaction: {fileID: 0}
+  parry: {fileID: 0}
 --- !u!143 &1484661157
 CharacterController:
   m_ObjectHideFlags: 0
@@ -2543,6 +2544,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackController: {fileID: 1484661159}
+  parry: {fileID: 0}
   attackKey: 323
 --- !u!114 &1484661159
 MonoBehaviour:
@@ -2609,6 +2611,7 @@ MonoBehaviour:
   parryKey: 101
   parryWindow: 0.25
   parryCooldown: 0.6
+  parryActionDuration: 0.35
   facingAngle: 160
   orbitCamera: {fileID: 234868644}
   logParry: 1

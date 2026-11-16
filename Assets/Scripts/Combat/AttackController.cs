@@ -150,6 +150,29 @@ public class AttackController : MonoBehaviour
         _comboIndex = withinComboWindow ? (_comboIndex + 1) % length : 0;
     }
 
+    /// <summary>
+    /// 强制取消当前攻击（弹反等"更高优先级动作"使用）。
+    ///
+    /// 关键：把 IsAttacking 置 false——MeleeHitbox 每帧检查这个标志，
+    /// 一旦变 false，后续的命中窗口不再采样，**还没结算的伤害就作废了**。
+    /// 已经结算过的伤害无法撤回。
+    /// </summary>
+    public void CancelAttack()
+    {
+        if (!IsAttacking) return;
+
+        IsAttacking = false;
+        _queued = false;
+        _sawAttackState = false;
+
+        // 让动画尽快离开攻击状态（否则会"取消判定但仍在挥刀"）
+        if (animator != null && animator.runtimeAnimatorController != null)
+            animator.CrossFade(LocomotionStateName, 0.1f);
+    }
+
+    /// <summary>默认的"非攻击"状态名，取消攻击时切回它。</summary>
+    public string LocomotionStateName { get; set; } = "Locomotion";
+
     private AttackDefinitionSO GetCurrentDefinition()
     {
         if (combo == null || combo.Length == 0) return null;

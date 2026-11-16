@@ -70,6 +70,9 @@ public class ThirdPersonMotor : MonoBehaviour
     [Tooltip("受击硬直期间锁住移动（留空则自动查找同物体上的 PlayerHitReaction）")]
     [SerializeField] private PlayerHitReaction hitReaction;
 
+    [Tooltip("弹反动作期间锁住移动（留空则自动查找同物体上的 PlayerParry）")]
+    [SerializeField] private PlayerParry parry;
+
     // 参数哈希：比每帧传字符串快，也避免拼写错误
     private static readonly int SpeedParamHash = Animator.StringToHash("Speed");
 
@@ -105,6 +108,7 @@ public class ThirdPersonMotor : MonoBehaviour
 
         if (attackController == null) attackController = GetComponent<AttackController>();
         if (hitReaction == null) hitReaction = GetComponent<PlayerHitReaction>();
+        if (parry == null) parry = GetComponent<PlayerParry>();
 
         if (alignVisualOnAwake) AlignVisualToGround();
     }
@@ -149,6 +153,13 @@ public class ThirdPersonMotor : MonoBehaviour
 
         // 受击硬直期间也锁住移动
         if (hitReaction != null && hitReaction.IsReacting)
+        {
+            input = Vector2.zero;
+            sprinting = false;
+        }
+
+        // 弹反动作期间锁住移动（弹反应有的优先级：高于移动和攻击）
+        if (parry != null && parry.IsParryLocked)
         {
             input = Vector2.zero;
             sprinting = false;
