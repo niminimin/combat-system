@@ -67,6 +67,10 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
             if (parry.TryParryAttack(source, out parriedEnemy))
             {
                 parriedEnemy.OnParried();
+
+                // 顿帧：弹反成功的瞬间冻住几十毫秒，打击感更实
+                if (HitStop.Instance != null) HitStop.Instance.Freeze();
+
                 Parried?.Invoke(parriedEnemy);
                 return;
             }
