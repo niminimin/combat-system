@@ -24,6 +24,13 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
     [Tooltip("是否在控制台打印受击日志")]
     [SerializeField] private bool logHits = true;
 
+    [Header("相机抖动")]
+    [Tooltip("玩家被命中时的抖动强度（0~1）")]
+    [SerializeField, Range(0f, 1f)] private float hitShake = 0.5f;
+
+    [Tooltip("弹反成功时的抖动强度（0~1），通常比挨打更强")]
+    [SerializeField, Range(0f, 1f)] private float parryShake = 0.65f;
+
     private int _triggerHash;
     private float _reactingUntil;
 
@@ -68,8 +75,9 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
             {
                 parriedEnemy.OnParried();
 
-                // 顿帧：弹反成功的瞬间冻住几十毫秒，打击感更实
+                // 顿帧 + 抖动：弹反成功的瞬间
                 if (HitStop.Instance != null) HitStop.Instance.Freeze();
+                if (CameraShake.Instance != null) CameraShake.Instance.Shake(parryShake);
 
                 Parried?.Invoke(parriedEnemy);
                 return;
@@ -84,6 +92,9 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
 
         animator.SetTrigger(_triggerHash);
         _reactingUntil = Time.time + reactionDuration;
+
+        // 相机抖动：玩家被命中
+        if (CameraShake.Instance != null) CameraShake.Instance.Shake(hitShake);
 
         if (logHits)
             Debug.Log($"[PlayerHitReaction] 被 {(source != null ? source.name : "未知")} 命中", this);

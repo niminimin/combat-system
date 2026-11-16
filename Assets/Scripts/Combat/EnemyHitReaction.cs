@@ -23,6 +23,9 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
     [Tooltip("受击反应持续时间（秒）")]
     [SerializeField, Min(0f)] private float reactionDuration = 0.6f;
 
+    [Tooltip("命中这个敌人时的相机抖动强度（0~1）")]
+    [SerializeField, Range(0f, 1f)] private float shakeAmount = 0.35f;
+
     [SerializeField] private bool logHits = true;
 
     private int _triggerHash;
@@ -57,6 +60,9 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
         if (ignoreHitsWhileReacting && IsReacting) return;
 
         PlayImpact();
+
+        // 相机抖动：玩家砍中敌人
+        if (CameraShake.Instance != null) CameraShake.Instance.Shake(shakeAmount);
 
         Hit?.Invoke(source);   // 通知状态机：被打 → 立刻发现攻击者
 
