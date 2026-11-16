@@ -28,6 +28,9 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
 
     [SerializeField] private bool logHits = true;
 
+    [Tooltip("血量组件（留空则自动查找同物体上的 CharacterStats）")]
+    [SerializeField] private CharacterStats stats;
+
     private int _triggerHash;
     private float _reactionUntil;
 
@@ -39,6 +42,7 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
     private void Awake()
     {
         if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (stats == null) stats = GetComponent<CharacterStats>();
         _triggerHash = Animator.StringToHash(hitTrigger);
     }
 
@@ -55,12 +59,18 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
     }
 
     /// <summary>被命中时调用（由 MeleeHitbox 触发）。</summary>
-    public void OnHit(GameObject source)
+    public void OnHit(GameObject source, float damage)
     {
         // 相机抖动每次命中都要有 —— 连招第二刀落在受击动画里也不能没反馈
         if (CameraShake.Instance != null) CameraShake.Instance.Shake(shakeAmount);
 
-        // 但受击动画不重播：连续命中时让它播完，避免动画一直被第一帧打断
+        // 结算伤害（可能触发死亡）
+        if (stats != null) stats.TakeDamage(damage, source);
+
+        // 已经死了：交给死亡流程，不播受击（避免和死亡动画抢）
+        if (stats != null && stats.IsDead) return;
+
+        // 受击动画不重播：连续命中时让它播完，避免动画一直被第一帧打断
         if (ignoreHitsWhileReacting && IsReacting) return;
 
         PlayImpact();
@@ -68,6 +78,6 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
         Hit?.Invoke(source);   // 通知状态机：被打 → 立刻发现攻击者
 
         if (logHits)
-            Debug.Log($"[{nameof(EnemyHitReaction)}] {name} 被 {source.name} 命中", this);
+            Debug.Log($"[{nameof(EnemyHitReaction)}] {name} 被 {(source != null ? source.name : "?")} 命中", this);
     }
 }

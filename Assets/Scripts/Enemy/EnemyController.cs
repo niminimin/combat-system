@@ -21,6 +21,7 @@ public abstract class EnemyController : MonoBehaviour
     public EnemyPerception Perception { get; private set; }
     public AttackController Attack { get; private set; }
     public EnemyHitReaction Reaction { get; private set; }
+    public CharacterStats Stats { get; private set; }
     public Animator Animator { get; private set; }
 
     /// <summary>玩家 Transform（由 Perception 找到）。</summary>
@@ -163,6 +164,7 @@ public abstract class EnemyController : MonoBehaviour
 
         Attack = GetComponent<AttackController>();
         Reaction = GetComponent<EnemyHitReaction>();
+        Stats = GetComponent<CharacterStats>();
 
         HomePosition = transform.position;
         HomeRotation = transform.rotation;
@@ -181,16 +183,25 @@ public abstract class EnemyController : MonoBehaviour
 
     protected virtual void OnEnable()
     {
-        // Reaction 在 Awake 里赋值，OnEnable 一定在其后执行
+        // Reaction / Stats 在 Awake 里赋值，OnEnable 一定在其后执行
         if (Reaction != null) Reaction.Hit += HandleHit;
+        if (Stats != null) Stats.Died += HandleDied;
     }
 
     protected virtual void OnDisable()
     {
         if (Reaction != null) Reaction.Hit -= HandleHit;
+        if (Stats != null) Stats.Died -= HandleDied;
 
         // 兜底：被禁用/销毁时从导演名单里移除，否则会永远占着令牌
         if (CombatDirector.Instance != null) CombatDirector.Instance.Unregister(this);
+    }
+
+    /// <summary>血量归零：切到死亡状态。</summary>
+    private void HandleDied(GameObject killer)
+    {
+        _pendingAttack = false;
+        SwitchState(EnemyState.DEAD);
     }
 
     /// <summary>

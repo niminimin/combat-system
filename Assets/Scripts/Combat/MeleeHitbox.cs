@@ -120,6 +120,12 @@ public class MeleeHitbox : MonoBehaviour
             targetLayers, QueryTriggerInteraction.Ignore);
 
         int applied = 0;
+
+        // 伤害来自"这一招"的数据（AttackDefinitionSO）
+        float damage = attackController.CurrentAttack != null
+            ? attackController.CurrentAttack.damage
+            : 0f;
+
         foreach (var c in hits)
         {
             if (c == null) continue;
@@ -128,11 +134,11 @@ public class MeleeHitbox : MonoBehaviour
             var receiver = c.GetComponentInParent<IDamageReceiver>();
             if (receiver == null) continue;           // 不是可受击对象（墙、道具）
 
-            receiver.OnHit(gameObject);
+            receiver.OnHit(gameObject, damage);
             OnHitSomething?.Invoke(c);
 
             if (logHits)
-                Debug.Log($"[MeleeHitbox] 命中 {c.name}（{c.transform.root.name}）", this);
+                Debug.Log($"[MeleeHitbox] 命中 {c.name}（{c.transform.root.name}），伤害 {damage:F0}", this);
 
             applied++;
             if (applied >= maxTargetsPerSwing) break;

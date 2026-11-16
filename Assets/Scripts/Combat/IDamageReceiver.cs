@@ -6,6 +6,10 @@
 /// </summary>
 public interface IDamageReceiver
 {
-    /// <summary>受到一次命中。<paramref name="source"/> 是发起攻击的物体。</summary>
-    void OnHit(UnityEngine.GameObject source);
+    /// <summary>
+    /// 受到一次命中。
+    /// <paramref name="source"/> 是发起攻击的物体；
+    /// <paramref name="damage"/> 来自 AttackDefinitionSO 的伤害值。
+    /// </summary>
+    void OnHit(UnityEngine.GameObject source, float damage);
 }

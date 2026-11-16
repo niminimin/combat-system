@@ -57,15 +57,19 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
     [Tooltip("玩家身上的弹反组件（留空则自动查找）")]
     [SerializeField] private PlayerParry parry;
 
+    [Tooltip("血量组件（留空则自动查找）")]
+    [SerializeField] private CharacterStats stats;
+
     private void Awake()
     {
         if (animator == null) animator = GetComponentInChildren<Animator>();
         if (parry == null) parry = GetComponent<PlayerParry>();
+        if (stats == null) stats = GetComponent<CharacterStats>();
 
         _triggerHash = Animator.StringToHash(hitTrigger);
     }
 
-    public void OnHit(GameObject source)
+    public void OnHit(GameObject source, float damage)
     {
         // 弹反优先：窗口内 + 正面来敌 → 敌人被打断，玩家不受击
         if (parry != null)
@@ -83,6 +87,12 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
                 return;
             }
         }
+
+        // 没弹住 → 结算伤害（可能触发死亡）
+        if (stats != null) stats.TakeDamage(damage, source);
+
+        // 已经死了：交给死亡流程，不播受击
+        if (stats != null && stats.IsDead) return;
 
         if (animator == null)
         {
