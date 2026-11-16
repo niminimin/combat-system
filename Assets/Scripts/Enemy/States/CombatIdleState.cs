@@ -3,28 +3,31 @@ using UnityEngine;
 /// <summary>
 /// 战斗待机：停在玩家附近，摆战斗姿势、始终面向玩家。
 ///
-/// 这是"进入战斗但还没出手"的状态。
+/// 隔一段时间做一次"要不要挪个位置"的决定：
+///   命中 orbitChance → 进入 ORBIT 环绕一小段
+///   否则 → 继续站着，重新计时
+///
 /// 后续会在这里接：
-///   · 环绕（ORBIT 状态）—— 隔一段时间换个位置
 ///   · 令牌（CombatDirector）—— 拿到令牌后切 ATTACK
 ///   · 后退（RETREAT）—— 攻击完退回这个状态
-///
-/// 现在只做最基础的部分：停住、面向、玩家跑远就重新追。
 /// </summary>
 public class CombatIdleState : BaseState
 {
+    private float nextDecisionTime;
+
     public override EnemyState Id => EnemyState.COMBAT_IDLE;
 
     public override void OnEnter(EnemyController owner)
     {
         owner.Locomotion.Stop();
-        owner.SetCombatStance(true);     // Animator 切到战斗站姿
+        owner.SetCombatStance(true);      // Animator 切到战斗站姿
+        owner.SetOrbiting(false, 0f);     // 确保不在侧移状态
+
+        ScheduleNextDecision(owner);
     }
 
-    public override void OnExit(EnemyController owner)
-    {
-        owner.SetCombatStance(false);    // 回到移动动画
-    }
+    // 注意：离场时不关 InCombat —— 如果是切去 ORBIT，仍处于战斗姿态。
+    // "离开战斗"的关闭由 CHASE 等非战斗状态负责。
 
     public override void LogicUpdate(EnemyController owner)
     {
@@ -46,6 +49,22 @@ public class CombatIdleState : BaseState
         // 原地转身，始终面向玩家
         owner.FaceTarget(owner.Player.position);
 
-        // 暂时不进入 ATTACK —— 等令牌系统接入
+        // 到点了：决定站着还是绕一段
+        if (Time.time < nextDecisionTime) return;
+
+        if (Random.value <= owner.orbitChance)
+        {
+            owner.SwitchState(EnemyState.ORBIT);
+            return;
+        }
+
+        // 这次决定继续站着，重新排下一次
+        ScheduleNextDecision(owner);
+    }
+
+    private void ScheduleNextDecision(EnemyController owner)
+    {
+        nextDecisionTime = Time.time +
+                           Random.Range(owner.idleTimeRange.x, owner.idleTimeRange.y);
     }
 }

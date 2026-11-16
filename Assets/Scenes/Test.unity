@@ -1142,6 +1142,11 @@ MonoBehaviour:
   loseTargetDistance: 14
   chaseSpeed: 4.5
   returnSpeed: 2.5
+  orbitRadius: 3
+  orbitSpeed: 1.1
+  orbitDurationRange: {x: 0.8, y: 1.5}
+  idleTimeRange: {x: 1.5, y: 3}
+  orbitChance: 0.6
   guardTurnSpeed: 20
   attackInterval: 0.5
   leashRange: 12

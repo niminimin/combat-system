@@ -45,7 +45,23 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("回位时的移动速度")]
     public float returnSpeed = 2.5f;
 
-    [Tooltip("站岗时原地转身的速度（度/秒），纯表现")]
+    [Header("环绕")]
+    [Tooltip("环绕时保持的半径（米）")]
+    public float orbitRadius = 3f;
+
+    [Tooltip("环绕移动速度（米/秒）。贴着动画步频设（1.0~1.2）才不滑步")]
+    public float orbitSpeed = 1.1f;
+
+    [Tooltip("环绕持续时间的范围（秒）")]
+    public Vector2 orbitDurationRange = new Vector2(0.8f, 1.5f);
+
+    [Tooltip("站住多久之后做一次决定（秒）")]
+    public Vector2 idleTimeRange = new Vector2(1.5f, 3f);
+
+    [Tooltip("做决定时选择环绕的概率（其余情况继续站着）")]
+    [Range(0f, 1f)] public float orbitChance = 0.6f;
+
+    [Tooltip("原地转身的速度（度/秒），纯表现")]
     public float guardTurnSpeed = 20f;
 
     [Tooltip("两次攻击之间的间隔（从上次攻击结束开始算，秒）")]
@@ -97,12 +113,15 @@ public abstract class EnemyController : MonoBehaviour
     public BaseState guardState { get; private set; }
     public BaseState chaseState { get; private set; }
     public BaseState combatIdleState { get; private set; }
+    public BaseState orbitState { get; private set; }
     public BaseState attackState { get; private set; }
     public BaseState returnState { get; private set; }
     public BaseState deadState { get; private set; }
 
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int InCombatHash = Animator.StringToHash("InCombat");
+    private static readonly int OrbitingHash = Animator.StringToHash("Orbiting");
+    private static readonly int StrafeDirHash = Animator.StringToHash("StrafeDir");
 
     // 被攻击后的"强制警觉"截止时间
     private float _alertUntil;
@@ -132,6 +151,7 @@ public abstract class EnemyController : MonoBehaviour
         guardState = CreateGuardState();
         chaseState = CreateChaseState();
         combatIdleState = CreateCombatIdleState();
+        orbitState = CreateOrbitState();
         attackState = CreateAttackState();
         returnState = CreateReturnState();
         deadState = CreateDeadState();
@@ -192,6 +212,7 @@ public abstract class EnemyController : MonoBehaviour
     protected virtual BaseState CreateGuardState() { return new GuardState(); }
     protected virtual BaseState CreateChaseState() { return new ChaseState(); }
     protected virtual BaseState CreateCombatIdleState() { return new CombatIdleState(); }
+    protected virtual BaseState CreateOrbitState() { return new OrbitState(); }
     protected virtual BaseState CreateAttackState() { return new AttackState(); }
     protected virtual BaseState CreateReturnState() { return new ReturnState(); }
     protected virtual BaseState CreateDeadState() { return new DeadState(); }
@@ -200,6 +221,14 @@ public abstract class EnemyController : MonoBehaviour
     public void SetCombatStance(bool inCombat)
     {
         if (Animator != null) Animator.SetBool(InCombatHash, inCombat);
+    }
+
+    /// <summary>切换 Animator 的侧移动画（ORBIT 时 true）。</summary>
+    public void SetOrbiting(bool orbiting, float direction)
+    {
+        if (Animator == null) return;
+        Animator.SetFloat(StrafeDirHash, Mathf.Sign(direction));
+        Animator.SetBool(OrbitingHash, orbiting);
     }
 
     protected virtual void Update()
@@ -270,6 +299,7 @@ public abstract class EnemyController : MonoBehaviour
             case EnemyState.GUARD: return guardState;
             case EnemyState.CHASE: return chaseState;
             case EnemyState.COMBAT_IDLE: return combatIdleState;
+            case EnemyState.ORBIT: return orbitState;
             case EnemyState.ATTACK: return attackState;
             case EnemyState.RETURN: return returnState;
             case EnemyState.DEAD: return deadState;

@@ -11,6 +11,9 @@ public class GuardState : BaseState
     public override void OnEnter(EnemyController owner)
     {
         owner.Locomotion.Stop();
+        owner.SetCombatStance(false);
+        owner.SetOrbiting(false, 0f);
+        owner.Locomotion.SetRotationEnabled(true);
     }
 
     public override void LogicUpdate(EnemyController owner)

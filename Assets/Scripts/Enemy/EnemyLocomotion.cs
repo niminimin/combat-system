@@ -75,6 +75,16 @@ public class EnemyLocomotion : MonoBehaviour
         Agent.velocity = Vector3.zero;
     }
 
+    /// <summary>
+    /// 开关 Agent 的自动转向。
+    /// 侧移（Strafe）时必须关掉：否则角色会转向"移动方向"，
+    /// 而侧移动画要求身体始终面向玩家。
+    /// </summary>
+    public void SetRotationEnabled(bool enabled)
+    {
+        if (Agent != null) Agent.updateRotation = enabled;
+    }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(0.3f, 0.8f, 1f, 0.7f);

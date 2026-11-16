@@ -10,6 +10,11 @@ public class ReturnState : BaseState
 
     public override void OnEnter(EnemyController owner)
     {
+        // 回位不是战斗姿态：恢复移动动画与 Agent 自动转向
+        owner.SetCombatStance(false);
+        owner.SetOrbiting(false, 0f);
+        owner.Locomotion.SetRotationEnabled(true);
+
         owner.Locomotion.MoveTo(owner.HomePosition, owner.returnSpeed);
     }
 

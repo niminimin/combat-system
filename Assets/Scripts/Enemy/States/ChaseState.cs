@@ -18,6 +18,11 @@ public class ChaseState : BaseState
     public override void OnEnter(EnemyController owner)
     {
         lostSightTimer = 0f;
+
+        // 离开战斗姿态：恢复移动动画（Locomotion 混合树）+ 打开 Agent 自动转向
+        owner.SetCombatStance(false);
+        owner.SetOrbiting(false, 0f);
+        owner.Locomotion.SetRotationEnabled(true);
     }
 
     public override void LogicUpdate(EnemyController owner)
