@@ -32,8 +32,8 @@ public class PlayerHealthBar : MonoBehaviour
     [Tooltip("红条开始收缩前的停顿（秒）")]
     [SerializeField, Min(0f)] private float redDelay = 0.35f;
 
-    [Tooltip("红条收缩速度（越小越慢）")]
-    [SerializeField, Min(0.1f)] private float redSpeed = 1.2f;
+    [Tooltip("红条收缩速度：每秒收缩多少个整条（0.3 ≈ 掉 10% 血需 0.33 秒）")]
+    [SerializeField, Min(0.01f)] private float redSpeed = 0.3f;
 
     [Header("颜色")]
     [SerializeField] private Color greenColor = new Color(0.28f, 0.75f, 0.32f);

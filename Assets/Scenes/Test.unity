@@ -262,9 +262,9 @@ MonoBehaviour:
   stats: {fileID: 1484661164}
   greenFill: {fileID: 675570996}
   redFill: {fileID: 1466233930}
-  greenSpeed: 12
-  redDelay: 0.35
-  redSpeed: 1.2
+  greenSpeed: 14
+  redDelay: 0.25
+  redSpeed: 0.3
   greenColor: {r: 0.28, g: 0.75, b: 0.32, a: 1}
   redColor: {r: 0.82, g: 0.2, b: 0.2, a: 1}
 --- !u!114 &145603946
