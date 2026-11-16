@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Slash
   m_EditorClassIdentifier: 
   animatorState: Attack
-  hitWindowStart: 0.36
+  hitWindowStart: 0.4
   hitWindowEnd: 0.55
   damage: 10
   cooldown: 0.35
