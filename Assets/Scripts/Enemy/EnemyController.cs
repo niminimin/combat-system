@@ -200,9 +200,10 @@ public abstract class EnemyController : MonoBehaviour
             SwitchState(EnemyState.CHASE);
 
         // 反击权：抢走当前持有者的令牌（无视冷却）
-        // 如果此时正处在受击硬直，OnTokenGranted 会把它记成 pending，硬直结束再出手
+        // 用 Request 而不是直接授予：一次横扫可能命中多个敌人，
+        // 由导演在本帧末尾按"离玩家最近"挑一个，避免一帧内反复收回/授予。
         if (CombatDirector.Instance != null)
-            CombatDirector.Instance.ForceGrant(this);
+            CombatDirector.Instance.RequestForceGrant(this);
     }
 
     /// <summary>是否处于"被打了"的强制警觉期。</summary>

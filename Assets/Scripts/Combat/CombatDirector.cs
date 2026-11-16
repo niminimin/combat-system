@@ -43,6 +43,9 @@ public class CombatDirector : MonoBehaviour
     }
 
     private readonly List<Combatant> _combatants = new List<Combatant>();
+
+    // 本帧收到的"被打抢令牌"请求，LateUpdate 里统一处理
+    private readonly List<EnemyController> _pendingForce = new List<EnemyController>();
     private float _nextGrantTime;
     private float _grantTime;
 
@@ -165,6 +168,46 @@ public class CombatDirector : MonoBehaviour
         CurrentHolder = null;
         _nextGrantTime = Time.time + attackCooldown * 0.5f;
         enemy.OnTokenRevoked();
+    }
+
+    /// <summary>
+    /// 请求"被打抢令牌"。**不立即授予**，而是攒到本帧的 LateUpdate 统一处理。
+    ///
+    /// 原因：一次横扫可能命中多个敌人，如果每个都立刻授予，就会在一帧内
+    /// 反复"收回→授予"，最终谁拿取决于 Physics.OverlapBox 的返回顺序（不确定）。
+    /// 统一处理时可以按规则挑一个，结果稳定。
+    /// </summary>
+    public void RequestForceGrant(EnemyController enemy)
+    {
+        if (enemy == null || enemy.IsDead) return;
+        if (_pendingForce.Contains(enemy)) return;
+        _pendingForce.Add(enemy);
+    }
+
+    private void LateUpdate()
+    {
+        if (_pendingForce.Count == 0) return;
+
+        // 同一帧只授予一个：取离玩家最近的（你正对着砍的那个）
+        EnemyController best = null;
+        float bestDistance = float.MaxValue;
+
+        foreach (var e in _pendingForce)
+        {
+            if (e == null || e.IsDead) continue;
+
+            float distance = e.Player != null
+                ? Vector3.Distance(e.transform.position, e.Player.position)
+                : 0f;
+
+            if (distance >= bestDistance) continue;
+            bestDistance = distance;
+            best = e;
+        }
+
+        _pendingForce.Clear();
+
+        if (best != null) ForceGrant(best);
     }
 
     /// <summary>
