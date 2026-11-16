@@ -8,7 +8,8 @@ public enum EnemyState
     CHASE,        // 追击：走向玩家，进入战斗距离切 COMBAT_IDLE
     COMBAT_IDLE,  // 战斗待机：停在玩家附近摆战斗姿势、面向玩家
     ORBIT,        // 环绕：沿着玩家周围的一段弧线侧移
-    ATTACK,       // 攻击：发起一次攻击（等令牌系统接入后才可达）
+    ATTACK,       // 攻击：接近 + 出手（持令牌期间）
+    RETREAT,      // 后撤：攻击后退开一段，再回战斗待机
     RETURN,       // 回位：走回出生点
     DEAD          // 死亡：停止一切行为（后续接死亡动画）
 }

@@ -140,7 +140,7 @@ public class AttackState : BaseState
             if (owner.Attack.IsAttacking) return;
         }
 
-        // 打完了 → 回战斗待机
-        owner.SwitchState(EnemyState.COMBAT_IDLE);
+        // 打完了 → 后撤（OnExit 里会归还令牌）
+        owner.SwitchState(EnemyState.RETREAT);
     }
 }

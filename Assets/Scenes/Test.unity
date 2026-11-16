@@ -1120,6 +1120,8 @@ MonoBehaviour:
   disengageRange: 4.5
   tokenRange: 5
   approachSpeed: 1.4
+  retreatDistance: 1.5
+  retreatSpeed: 1.1
   loseTargetDistance: 14
   chaseSpeed: 4.5
   returnSpeed: 2.5
@@ -2246,6 +2248,8 @@ MonoBehaviour:
   disengageRange: 4.5
   tokenRange: 5
   approachSpeed: 1.4
+  retreatDistance: 1.5
+  retreatSpeed: 1.1
   loseTargetDistance: 14
   chaseSpeed: 4.5
   returnSpeed: 2.5
@@ -3280,6 +3284,8 @@ MonoBehaviour:
   disengageRange: 4.5
   tokenRange: 5
   approachSpeed: 1.4
+  retreatDistance: 1.5
+  retreatSpeed: 1.1
   loseTargetDistance: 14
   chaseSpeed: 4.5
   returnSpeed: 2.5

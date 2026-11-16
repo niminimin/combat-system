@@ -43,6 +43,13 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("拿到令牌后、走向玩家的速度")]
     public float approachSpeed = 3f;
 
+    [Header("后撤")]
+    [Tooltip("攻击结束后向后退开多远（米）")]
+    public float retreatDistance = 1.5f;
+
+    [Tooltip("后撤速度（米/秒）。贴着 Back Walk 的步频设（约 1.1）才不滑步")]
+    public float retreatSpeed = 1.1f;
+
     [Tooltip("玩家超过这个距离就放弃追击、回位")]
     public float loseTargetDistance = 14f;
 
@@ -116,6 +123,7 @@ public abstract class EnemyController : MonoBehaviour
     public BaseState combatIdleState { get; private set; }
     public BaseState orbitState { get; private set; }
     public BaseState attackState { get; private set; }
+    public BaseState retreatState { get; private set; }
     public BaseState returnState { get; private set; }
     public BaseState deadState { get; private set; }
 
@@ -123,6 +131,7 @@ public abstract class EnemyController : MonoBehaviour
     private static readonly int InCombatHash = Animator.StringToHash("InCombat");
     private static readonly int OrbitingHash = Animator.StringToHash("Orbiting");
     private static readonly int StrafeDirHash = Animator.StringToHash("StrafeDir");
+    private static readonly int RetreatingHash = Animator.StringToHash("Retreating");
 
     // 被攻击后的"强制警觉"截止时间
     private float _alertUntil;
@@ -154,6 +163,7 @@ public abstract class EnemyController : MonoBehaviour
         combatIdleState = CreateCombatIdleState();
         orbitState = CreateOrbitState();
         attackState = CreateAttackState();
+        retreatState = CreateRetreatState();
         returnState = CreateReturnState();
         deadState = CreateDeadState();
 
@@ -218,6 +228,7 @@ public abstract class EnemyController : MonoBehaviour
     protected virtual BaseState CreateCombatIdleState() { return new CombatIdleState(); }
     protected virtual BaseState CreateOrbitState() { return new OrbitState(); }
     protected virtual BaseState CreateAttackState() { return new AttackState(); }
+    protected virtual BaseState CreateRetreatState() { return new RetreatState(); }
     protected virtual BaseState CreateReturnState() { return new ReturnState(); }
     protected virtual BaseState CreateDeadState() { return new DeadState(); }
 
@@ -233,6 +244,12 @@ public abstract class EnemyController : MonoBehaviour
         if (Animator == null) return;
         Animator.SetFloat(StrafeDirHash, Mathf.Sign(direction));
         Animator.SetBool(OrbitingHash, orbiting);
+    }
+
+    /// <summary>切换 Animator 的后撤动画。</summary>
+    public void SetRetreating(bool retreating)
+    {
+        if (Animator != null) Animator.SetBool(RetreatingHash, retreating);
     }
 
     protected virtual void Update()
@@ -307,7 +324,8 @@ public abstract class EnemyController : MonoBehaviour
         bool inCombat = id == EnemyState.CHASE
                         || id == EnemyState.COMBAT_IDLE
                         || id == EnemyState.ORBIT
-                        || id == EnemyState.ATTACK;
+                        || id == EnemyState.ATTACK
+                        || id == EnemyState.RETREAT;
 
         if (inCombat) CombatDirector.Instance.Register(this);
         else CombatDirector.Instance.Unregister(this);
@@ -370,6 +388,7 @@ public abstract class EnemyController : MonoBehaviour
             case EnemyState.COMBAT_IDLE: return combatIdleState;
             case EnemyState.ORBIT: return orbitState;
             case EnemyState.ATTACK: return attackState;
+            case EnemyState.RETREAT: return retreatState;
             case EnemyState.RETURN: return returnState;
             case EnemyState.DEAD: return deadState;
             default: return null;
