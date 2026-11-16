@@ -19,6 +19,12 @@ public class PlayerAttackInput : MonoBehaviour
     [Tooltip("攻击键（鼠标左键 / 手柄按钮可在 Input Manager 里映射）")]
     [SerializeField] private KeyCode attackKey = KeyCode.Mouse0;
 
+    [Tooltip("朝向来源：攻击瞬间转向相机的水平朝向（留空自动查找主相机）")]
+    [SerializeField] private ThirdPersonOrbitCamera orbitCamera;
+
+    [Tooltip("攻击瞬间是否转向相机方向（关闭则保持角色当前朝向）")]
+    [SerializeField] private bool faceCameraOnAttack = true;
+
     private void Reset()
     {
         attackController = GetComponent<AttackController>();
@@ -28,6 +34,7 @@ public class PlayerAttackInput : MonoBehaviour
     {
         if (attackController == null) attackController = GetComponent<AttackController>();
         if (parry == null) parry = GetComponent<PlayerParry>();
+        if (orbitCamera == null) orbitCamera = FindObjectOfType<ThirdPersonOrbitCamera>();
     }
 
     private void Update()
@@ -37,7 +44,26 @@ public class PlayerAttackInput : MonoBehaviour
 
         if (!Input.GetKeyDown(attackKey)) return;
 
+        // 攻击瞬间转向相机方向：角色的 rotation 只在移动时更新，
+        // 站着不动转视角时不会变，不转的话会朝着旧方向挥刀打空。
+        // 只在"即将开始新的一刀"时转（连招途中的缓冲输入不打断当前动作）。
+        if (faceCameraOnAttack && !attackController.IsAttacking && attackController.IsReady)
+            FaceCameraForward();
+
         // 不满足条件时 TryAttack 会自行处理冷却/缓冲
         attackController.TryAttack();
+    }
+
+    /// <summary>把角色转到相机的水平朝向（只转 Y 轴）。</summary>
+    private void FaceCameraForward()
+    {
+        Vector3 forward = orbitCamera != null
+            ? orbitCamera.PlanarRotation * Vector3.forward
+            : transform.forward;
+
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.0001f) return;
+
+        transform.rotation = Quaternion.LookRotation(forward.normalized, Vector3.up);
     }
 }

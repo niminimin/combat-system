@@ -2566,6 +2566,8 @@ MonoBehaviour:
   attackController: {fileID: 1484661159}
   parry: {fileID: 0}
   attackKey: 323
+  orbitCamera: {fileID: 234868644}
+  faceCameraOnAttack: 1
 --- !u!114 &1484661159
 MonoBehaviour:
   m_ObjectHideFlags: 0
