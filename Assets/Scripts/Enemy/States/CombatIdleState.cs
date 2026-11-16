@@ -24,6 +24,7 @@ public class CombatIdleState : BaseState
     private const float SettledAngle = 10f;
 
     private bool _repositioning;
+    private float _repositionDirection;
 
     public override void OnEnter(EnemyController owner)
     {
@@ -36,8 +37,37 @@ public class CombatIdleState : BaseState
 
         // 离自己的编队槽位太远 → 先走过去（自动散开包围）
         _repositioning = owner.HasSlot && AngleDeviation(owner) > RepositionThreshold;
+        if (_repositioning) BeginReposition(owner);
 
         ScheduleNextDecision(owner);
+    }
+
+    /// <summary>
+    /// 开始走向槽位。
+    /// 关键：关掉 Agent 自动转向 + 打开侧移动画，
+    /// 这样敌人是"侧着身子、面向玩家"走过去的（而不是背对玩家朝目标方向走）。
+    /// </summary>
+    private void BeginReposition(EnemyController owner)
+    {
+        Vector3 offset = owner.transform.position - owner.Player.position;
+        offset.y = 0f;
+        float currentDeg = Mathf.Atan2(offset.z, offset.x) * Mathf.Rad2Deg;
+
+        // 往哪个方向绕（决定侧移动画播左还是右）
+        float delta = Mathf.DeltaAngle(currentDeg, owner.SlotAngle * Mathf.Rad2Deg);
+        _repositionDirection = delta >= 0f ? 1f : -1f;
+
+        owner.Locomotion.SetRotationEnabled(false);
+        owner.SetOrbiting(true, _repositionDirection);
+    }
+
+    /// <summary>走位结束：恢复转向、关掉侧移动画。</summary>
+    private void EndReposition(EnemyController owner)
+    {
+        owner.Locomotion.Stop();
+        owner.SetOrbiting(false, 0f);
+        owner.Locomotion.SetRotationEnabled(true);
+        owner.FaceTarget(owner.Player.position);
     }
 
     // 注意：离场时不关 InCombat —— 如果是切去 ORBIT，仍处于战斗姿态。
@@ -60,10 +90,14 @@ public class CombatIdleState : BaseState
             return;
         }
 
-        // 走向自己的槽位（期间不转向玩家：Agent 会朝移动方向转）
+        // 走向自己的槽位：面向玩家、用侧移动画（和环绕同一套表现）
         if (_repositioning)
         {
-            if (MoveTowardsSlot(owner)) _repositioning = false;
+            if (MoveTowardsSlot(owner))
+            {
+                _repositioning = false;
+                EndReposition(owner);
+            }
             return;
         }
 
@@ -103,7 +137,7 @@ public class CombatIdleState : BaseState
         return Mathf.Abs(Mathf.DeltaAngle(currentDeg, slotDeg));
     }
 
-    /// <summary>朝自己的槽位走一步，返回是否已经到位。</summary>
+    /// <summary>朝自己的槽位走一步（面向玩家），返回是否已经到位。</summary>
     private static bool MoveTowardsSlot(EnemyController owner)
     {
         if (AngleDeviation(owner) <= SettledAngle) return true;
@@ -113,6 +147,9 @@ public class CombatIdleState : BaseState
         target.y = owner.transform.position.y;
 
         owner.Locomotion.MoveTo(target, owner.orbitSpeed, 0.2f);
+
+        // Agent 转向已关闭，这里手动保持面向玩家
+        if (owner.Player != null) owner.FaceTarget(owner.Player.position);
 
         if (owner.Locomotion.HasArrived) return true;
         return false;
