@@ -134,7 +134,15 @@ public class CombatDirector : MonoBehaviour
             // 注意用 IsHitStunned（不含弹反）——弹反是玩家的奖励时间
             if (CurrentHolder.IsHitStunned)
             {
+                float before = _holderStunTime;
                 _holderStunTime += Time.deltaTime;
+
+                // 每累计 0.5 秒打一条日志，方便确认计时是否真的在走
+                if (logEvents &&
+                    Mathf.FloorToInt(_holderStunTime / 0.5f) > Mathf.FloorToInt(before / 0.5f))
+                {
+                    Debug.Log($"[CombatDirector] {CurrentHolder.name} 压制累计 {_holderStunTime:F1} / {maxStunHold:F1} 秒");
+                }
 
                 if (_holderStunTime >= maxStunHold)
                 {
@@ -194,6 +202,11 @@ public class CombatDirector : MonoBehaviour
 
         CurrentHolder = null;
         _nextGrantTime = Time.time + attackCooldown * 0.5f;
+
+        // 把它排到队尾：否则下一轮挑"等得最久"时可能又是它，等于没交出去
+        foreach (var c in _combatants)
+            if (c.Enemy == enemy) { c.LastGrantTime = Time.time; break; }
+
         enemy.OnTokenRevoked();
     }
 
