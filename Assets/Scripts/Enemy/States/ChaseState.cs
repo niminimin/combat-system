@@ -6,7 +6,7 @@ using UnityEngine;
 ///   ② 距离：离玩家超过 loseTargetDistance
 ///   ③ 跟丢：连续 loseSightDelay 秒看不到玩家（视线被挡）
 ///
-/// 进入攻击距离时停下、面向玩家，等 attackInterval 到了再 ATTACK。
+/// 进入战斗距离（combatRange）时停下，转 COMBAT_IDLE 等令牌。
 /// </summary>
 public class ChaseState : BaseState
 {

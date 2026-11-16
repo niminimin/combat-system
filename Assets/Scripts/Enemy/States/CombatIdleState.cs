@@ -23,6 +23,9 @@ public class CombatIdleState : BaseState
         owner.SetCombatStance(true);      // Animator 切到战斗站姿
         owner.SetOrbiting(false, 0f);     // 确保不在侧移状态
 
+        // 重新排队：刚赶到 / 刚打完的敌人不该插队
+        if (CombatDirector.Instance != null) CombatDirector.Instance.MarkJoined(owner);
+
         ScheduleNextDecision(owner);
     }
 

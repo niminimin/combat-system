@@ -36,6 +36,13 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("脱离战斗的距离：COMBAT_IDLE 时玩家跑出这个距离就重新追击（必须大于 combatRange，避免抖动）")]
     public float disengageRange = 4.5f;
 
+    [Header("令牌")]
+    [Tooltip("距离玩家超过这个距离不会拿到攻击令牌")]
+    public float tokenRange = 5f;
+
+    [Tooltip("拿到令牌后、走向玩家的速度")]
+    public float approachSpeed = 3f;
+
     [Tooltip("玩家超过这个距离就放弃追击、回位")]
     public float loseTargetDistance = 14f;
 
@@ -64,9 +71,6 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("原地转身的速度（度/秒），纯表现")]
     public float guardTurnSpeed = 20f;
 
-    [Tooltip("两次攻击之间的间隔（从上次攻击结束开始算，秒）")]
-    public float attackInterval = 1.2f;
-
     [Header("脱战条件")]
     [Tooltip("拴绳半径：离出生点超过这个距离就放弃追击、回位")]
     public float leashRange = 12f;
@@ -93,9 +97,6 @@ public abstract class EnemyController : MonoBehaviour
 
     [Tooltip("连招内两刀之间的间隔（秒）。必须小于 AttackController 的 comboResetDelay(0.8s)，否则连招会断开")]
     [Min(0f)] public float comboInterval = 0.15f;
-
-    /// <summary>下一次允许攻击的时间（时间戳）。由 AttackState 写入，ChaseState 读取。</summary>
-    public float NextAttackTime { get; set; }
 
     /// <summary>攻击动作是否还在播放（含收招过渡）——用来避免"边挥刀边移动"。</summary>
     public bool IsAttackAnimationPlaying()
@@ -168,6 +169,9 @@ public abstract class EnemyController : MonoBehaviour
     protected virtual void OnDisable()
     {
         if (Reaction != null) Reaction.Hit -= HandleHit;
+
+        // 兜底：被禁用/销毁时从导演名单里移除，否则会永远占着令牌
+        if (CombatDirector.Instance != null) CombatDirector.Instance.Unregister(this);
     }
 
     /// <summary>
@@ -287,6 +291,71 @@ public abstract class EnemyController : MonoBehaviour
         currentState = target;
         StaggeredThisState = false;      // 进入新状态，清掉"挨打"标记
         currentState.OnEnter(this);
+
+        UpdateCombatRegistration();
+    }
+
+    /// <summary>
+    /// 注册边界是"是否参战"，不是"是否摆战斗姿势"：
+    /// CHASE / COMBAT_IDLE / ORBIT / ATTACK 都算参战；GUARD / RETURN / DEAD 不算。
+    /// </summary>
+    private void UpdateCombatRegistration()
+    {
+        if (CombatDirector.Instance == null) return;
+
+        EnemyState id = CurrentStateId;
+        bool inCombat = id == EnemyState.CHASE
+                        || id == EnemyState.COMBAT_IDLE
+                        || id == EnemyState.ORBIT
+                        || id == EnemyState.ATTACK;
+
+        if (inCombat) CombatDirector.Instance.Register(this);
+        else CombatDirector.Instance.Unregister(this);
+    }
+
+    // ───────────────────── 令牌（由 CombatDirector 调用） ─────────────────────
+
+    /// <summary>是否已经死亡（导演据此回收令牌）。</summary>
+    public bool IsDead => CurrentStateId == EnemyState.DEAD;
+
+    /// <summary>
+    /// 现在能不能把攻击令牌交给它。
+    /// 导演每帧问这个来筛候选人。
+    /// </summary>
+    public bool CanReceiveToken
+    {
+        get
+        {
+            if (!isActiveAndEnabled) return false;
+            if (Attack == null) return false;
+            if (IsStaggered) return false;
+            if (Player == null) return false;
+
+            // 只有在"站桩/环绕"时才可能出手（正在追的路上不行）
+            EnemyState id = CurrentStateId;
+            if (id != EnemyState.COMBAT_IDLE && id != EnemyState.ORBIT) return false;
+
+            return Vector3.Distance(transform.position, Player.position) <= tokenRange;
+        }
+    }
+
+    /// <summary>导演把令牌交给它：进入攻击状态。</summary>
+    public void OnTokenGranted()
+    {
+        SwitchState(EnemyState.ATTACK);
+    }
+
+    /// <summary>导演收回令牌（超时/被打断）。</summary>
+    public void OnTokenRevoked()
+    {
+        if (CurrentStateId == EnemyState.ATTACK)
+            SwitchState(EnemyState.COMBAT_IDLE);
+    }
+
+    /// <summary>攻击结束，交还令牌。</summary>
+    public void ReleaseToken()
+    {
+        if (CombatDirector.Instance != null) CombatDirector.Instance.Release(this);
     }
 
     /// <summary>当前状态（调试/外部查询用）。</summary>
