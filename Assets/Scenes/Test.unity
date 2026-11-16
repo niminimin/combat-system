@@ -1442,7 +1442,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef0712f73327d1f4c90dd9449670f923, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 120
+  data: {fileID: 11400000, guid: 2887f82799e2bc04a841f8e42ffdc0a0, type: 2}
+  fallbackMaxHealth: 100
   logDamage: 1
 --- !u!1001 &1058000164
 PrefabInstance:
@@ -2651,7 +2652,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef0712f73327d1f4c90dd9449670f923, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 120
+  data: {fileID: 11400000, guid: 2887f82799e2bc04a841f8e42ffdc0a0, type: 2}
+  fallbackMaxHealth: 100
   logDamage: 1
 --- !u!1 &1466233929
 GameObject:
@@ -3063,7 +3065,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef0712f73327d1f4c90dd9449670f923, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
+  data: {fileID: 11400000, guid: 7e9bc3d915f5591429934d5c691844ae, type: 2}
+  fallbackMaxHealth: 100
   logDamage: 1
 --- !u!1001 &1930900781
 PrefabInstance:
@@ -3878,7 +3881,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef0712f73327d1f4c90dd9449670f923, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 120
+  data: {fileID: 11400000, guid: 2887f82799e2bc04a841f8e42ffdc0a0, type: 2}
+  fallbackMaxHealth: 100
   logDamage: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

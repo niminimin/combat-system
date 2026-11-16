@@ -3,9 +3,11 @@ using UnityEngine;
 /// <summary>
 /// 角色血量（简化的 CharacterStats）。
 ///
+/// 数值来源：CharacterDataSO 资产。三个敌人指向同一个资产，
+/// 改一次就能同时调整它们，不用逐个改场景里的组件。
+///
 /// 相比 3DRPG 那套，这里刻意去掉了：
 ///   · 防御 / 暴击 / 经验 / 金币 / 升级加成
-///   · CharacterDataSO 数据资产
 /// 因为原型阶段只需要"能掉血、会死、能被订阅"。
 ///
 /// 设计上保留了 3DRPG 的两个关键点：
@@ -15,14 +17,21 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class CharacterStats : MonoBehaviour
 {
-    [Header("生命")]
-    [SerializeField, Min(1f)] private float maxHealth = 100f;
+    [Header("数据")]
+    [Tooltip("角色基础数据资产（血量等）。留空则使用下面的兜底值")]
+    [SerializeField] private CharacterDataSO data;
+
+    [Tooltip("没有配置 CharacterDataSO 时使用的最大生命值")]
+    [SerializeField, Min(1f)] private float fallbackMaxHealth = 100f;
 
     [Header("调试")]
     [SerializeField] private bool logDamage = true;
 
-    /// <summary>最大生命。</summary>
-    public float MaxHealth => maxHealth;
+    /// <summary>最大生命（优先从数据资产读）。</summary>
+    public float MaxHealth => data != null ? data.maxHealth : fallbackMaxHealth;
+
+    /// <summary>角色显示名（以后接 UI / Boss 血条）。</summary>
+    public string DisplayName => data != null ? data.displayName : name;
 
     /// <summary>当前生命。</summary>
     public float CurrentHealth { get; private set; }
@@ -48,8 +57,8 @@ public class CharacterStats : MonoBehaviour
     public void ResetStats()
     {
         IsDead = false;
-        CurrentHealth = maxHealth;
-        HealthChanged?.Invoke(CurrentHealth, maxHealth);
+        CurrentHealth = MaxHealth;
+        HealthChanged?.Invoke(CurrentHealth, MaxHealth);
     }
 
     /// <summary>扣血。<paramref name="source"/> 是造成伤害的物体。</summary>
@@ -60,9 +69,9 @@ public class CharacterStats : MonoBehaviour
         CurrentHealth = Mathf.Max(0f, CurrentHealth - amount);
 
         if (logDamage)
-            Debug.Log($"[{name}] 受到 {amount:F0} 伤害，剩余 {CurrentHealth:F0}/{maxHealth:F0}", this);
+            Debug.Log($"[{name}] 受到 {amount:F0} 伤害，剩余 {CurrentHealth:F0}/{MaxHealth:F0}", this);
 
-        HealthChanged?.Invoke(CurrentHealth, maxHealth);
+        HealthChanged?.Invoke(CurrentHealth, MaxHealth);
 
         // 致死：只走死亡流程，不再通知受击
         if (CurrentHealth <= 0f)
@@ -81,10 +90,10 @@ public class CharacterStats : MonoBehaviour
         if (amount <= 0f || IsDead) return 0f;
 
         float before = CurrentHealth;
-        CurrentHealth = Mathf.Min(CurrentHealth + amount, maxHealth);
+        CurrentHealth = Mathf.Min(CurrentHealth + amount, MaxHealth);
         float healed = CurrentHealth - before;
 
-        if (healed > 0f) HealthChanged?.Invoke(CurrentHealth, maxHealth);
+        if (healed > 0f) HealthChanged?.Invoke(CurrentHealth, MaxHealth);
         return healed;
     }
 
@@ -92,7 +101,7 @@ public class CharacterStats : MonoBehaviour
     public void Revive(float health)
     {
         IsDead = false;
-        CurrentHealth = Mathf.Clamp(health, 1f, maxHealth);
-        HealthChanged?.Invoke(CurrentHealth, maxHealth);
+        CurrentHealth = Mathf.Clamp(health, 1f, MaxHealth);
+        HealthChanged?.Invoke(CurrentHealth, MaxHealth);
     }
 }
