@@ -14,7 +14,7 @@ using UnityEngine;
 public class PlayerParry : MonoBehaviour
 {
     [Header("输入")]
-    [SerializeField] private KeyCode parryKey = KeyCode.F;
+    [SerializeField] private KeyCode parryKey = KeyCode.E;
 
     [Header("窗口")]
     [Tooltip("按下后多久内算弹反成功（秒）")]

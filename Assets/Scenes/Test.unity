@@ -2606,7 +2606,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3e3299df0fc5da42adf3de309ca0c6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  parryKey: 102
+  parryKey: 101
   parryWindow: 0.25
   parryCooldown: 0.6
   facingAngle: 160
