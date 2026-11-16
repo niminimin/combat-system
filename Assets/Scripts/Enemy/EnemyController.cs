@@ -89,6 +89,9 @@ public abstract class EnemyController : MonoBehaviour
     [Tooltip("被攻击后多久内无视视线规则、始终知道玩家位置（秒）")]
     public float alertMemory = 6f;
 
+    [Tooltip("被弹反后的硬直时长（秒）。期间令牌仍在他手里，别的敌人不会上来抢")]
+    public float parryStunDuration = 1.2f;
+
     [Tooltip("Animator 里攻击状态的 Tag（Attack/Attack2 都打这个 tag），用于判断'攻击动作是否还在播'")]
     public string attackStateTag = "Attack";
 
@@ -138,6 +141,9 @@ public abstract class EnemyController : MonoBehaviour
 
     // 拿到令牌时正处在受击硬直里 → 等硬直结束再出手
     private bool _pendingAttack;
+
+    // 被弹反后的硬直截止时间（比普通受击更长，期间令牌不释放）
+    private float _parryStunUntil;
 
     /// <summary>子类指定出生时进入哪个状态。</summary>
     protected abstract EnemyState InitialState { get; }
@@ -306,7 +312,9 @@ public abstract class EnemyController : MonoBehaviour
     {
         get
         {
+            if (Time.time < _parryStunUntil) return true;      // 被弹反：更长的硬直
             if (Reaction != null && Reaction.IsReacting) return true;
+
             if (Animator == null) return false;
             return Animator.GetCurrentAnimatorStateInfo(0).IsName(reactionStateName);
         }
@@ -398,6 +406,19 @@ public abstract class EnemyController : MonoBehaviour
 
         if (CurrentStateId == EnemyState.ATTACK)
             SwitchState(EnemyState.COMBAT_IDLE);
+    }
+
+    /// <summary>
+    /// 被玩家弹反：播受击 + 进入更长的硬直。
+    /// **故意不释放令牌** —— 持牌本身就是锁，别的敌人在此期间拿不到令牌，
+    /// 玩家才有一段安全的输出窗口。硬直结束时由 AttackState 离场统一归还。
+    /// </summary>
+    public void OnParried()
+    {
+        _parryStunUntil = Time.time + Mathf.Max(0f, parryStunDuration);
+
+        if (Reaction != null) Reaction.PlayImpact();
+        else if (Animator != null) Animator.SetTrigger("Impact");
     }
 
     /// <summary>攻击结束，交还令牌。</summary>

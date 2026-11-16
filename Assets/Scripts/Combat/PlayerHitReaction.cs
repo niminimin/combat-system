@@ -44,14 +44,34 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
     /// <summary>受击事件（以后接血量/UI 抖动/音效）。</summary>
     public event System.Action<GameObject> Hit;
 
+    /// <summary>弹反成功事件（以后接音效/顿帧/镜头）。</summary>
+    public event System.Action<EnemyController> Parried;
+
+    [Tooltip("玩家身上的弹反组件（留空则自动查找）")]
+    [SerializeField] private PlayerParry parry;
+
     private void Awake()
     {
         if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (parry == null) parry = GetComponent<PlayerParry>();
+
         _triggerHash = Animator.StringToHash(hitTrigger);
     }
 
     public void OnHit(GameObject source)
     {
+        // 弹反优先：窗口内 + 正面来敌 → 敌人被打断，玩家不受击
+        if (parry != null)
+        {
+            EnemyController parriedEnemy;
+            if (parry.TryParryAttack(source, out parriedEnemy))
+            {
+                parriedEnemy.OnParried();
+                Parried?.Invoke(parriedEnemy);
+                return;
+            }
+        }
+
         if (animator == null)
         {
             Debug.LogWarning($"[{nameof(PlayerHitReaction)}] 找不到 Animator，受击动画不会播放。", this);

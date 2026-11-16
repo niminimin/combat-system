@@ -39,15 +39,24 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
         _triggerHash = Animator.StringToHash(hitTrigger);
     }
 
+    /// <summary>
+    /// 只播受击动画，不触发 Hit 事件。
+    /// 弹反这类"不走受伤流程"的场合用它。
+    /// </summary>
+    public void PlayImpact()
+    {
+        if (animator != null && animator.runtimeAnimatorController != null)
+            animator.SetTrigger(_triggerHash);
+
+        _reactionUntil = Mathf.Max(_reactionUntil, Time.time + reactionDuration);
+    }
+
     /// <summary>被命中时调用（由 MeleeHitbox 触发）。</summary>
     public void OnHit(GameObject source)
     {
         if (ignoreHitsWhileReacting && IsReacting) return;
 
-        if (animator != null && animator.runtimeAnimatorController != null)
-            animator.SetTrigger(_triggerHash);
-
-        _reactionUntil = Time.time + reactionDuration;
+        PlayImpact();
 
         Hit?.Invoke(source);   // 通知状态机：被打 → 立刻发现攻击者
 

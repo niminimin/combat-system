@@ -1134,6 +1134,7 @@ MonoBehaviour:
   leashRange: 12
   loseSightDelay: 2.5
   alertMemory: 6
+  parryStunDuration: 1.2
   attackStateTag: Attack
   reactionStateName: Impact
   maxComboCount: 2
@@ -2262,6 +2263,7 @@ MonoBehaviour:
   leashRange: 12
   loseSightDelay: 2.5
   alertMemory: 6
+  parryStunDuration: 1.2
   attackStateTag: Attack
   reactionStateName: Impact
   maxComboCount: 2
@@ -2447,6 +2449,7 @@ GameObject:
   - component: {fileID: 1484661158}
   - component: {fileID: 1484661160}
   - component: {fileID: 1484661161}
+  - component: {fileID: 1484661162}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -2590,6 +2593,24 @@ MonoBehaviour:
   hitStateName: Impact
   reactionDuration: 0.45
   logHits: 1
+  parry: {fileID: 1484661162}
+--- !u!114 &1484661162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484661151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3e3299df0fc5da42adf3de309ca0c6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  parryKey: 102
+  parryWindow: 0.25
+  parryCooldown: 0.6
+  facingAngle: 160
+  logParry: 1
 --- !u!1001 &1930900781
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3298,6 +3319,7 @@ MonoBehaviour:
   leashRange: 12
   loseSightDelay: 2.5
   alertMemory: 6
+  parryStunDuration: 1.2
   attackStateTag: Attack
   reactionStateName: Impact
   maxComboCount: 2
