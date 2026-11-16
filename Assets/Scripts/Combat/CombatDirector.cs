@@ -60,6 +60,9 @@ public class CombatDirector : MonoBehaviour
     // 本次持牌期间，持有者累计"被打得动不了"的时长（弹反不计）
     private float _holderStunTime;
 
+    // 诊断日志的节流时间
+    private float _nextDiagnosticTime;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -169,7 +172,28 @@ public class CombatDirector : MonoBehaviour
             best = c.Enemy;
         }
 
-        if (best != null) Grant(best);
+        if (best != null)
+        {
+            Grant(best);
+        }
+        else if (logEvents && Time.time >= _nextDiagnosticTime)
+        {
+            // 冷却到了却挑不出人：把每个参战者的状态打出来，方便定位
+            _nextDiagnosticTime = Time.time + 1f;
+
+            var text = new System.Text.StringBuilder();
+            text.Append($"[CombatDirector] 无合格目标（参战 {_combatants.Count}）：");
+            foreach (var c in _combatants)
+            {
+                if (c.Enemy == null) { text.Append("[null] "); continue; }
+                float d = c.Enemy.Player != null
+                    ? Vector3.Distance(c.Enemy.transform.position, c.Enemy.Player.position)
+                    : -1f;
+                text.Append($"[{c.Enemy.name} 状态={c.Enemy.CurrentStateId}" +
+                            $" 可授牌={c.Enemy.CanReceiveToken} 距离={d:F1}] ");
+            }
+            Debug.Log(text.ToString());
+        }
     }
 
     private void Grant(EnemyController enemy)
