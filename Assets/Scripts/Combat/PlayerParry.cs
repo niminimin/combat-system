@@ -26,6 +26,9 @@ public class PlayerParry : MonoBehaviour
     [Tooltip("攻击者必须在玩家正面这个角度内（度）才算弹反成功")]
     [SerializeField, Range(30f, 360f)] private float facingAngle = 160f;
 
+    [Tooltip("判定用的朝向来源：留空则自动查找主相机。用相机的水平朝向判定更符合操作直觉")]
+    [SerializeField] private ThirdPersonOrbitCamera orbitCamera;
+
     [Header("调试")]
     [SerializeField] private bool logParry = true;
 
@@ -35,6 +38,28 @@ public class PlayerParry : MonoBehaviour
 
     /// <summary>当前是否处于弹反窗口内。</summary>
     public bool IsParrying => Time.time < _parryUntil;
+
+    private void Awake()
+    {
+        if (orbitCamera == null) orbitCamera = FindObjectOfType<ThirdPersonOrbitCamera>();
+    }
+
+    /// <summary>
+    /// 判定用的"正面"方向。
+    /// 优先用相机的水平朝向：角色的 transform.forward 只在移动时更新，
+    /// 站着不动转视角时它不会变，用它会误判。
+    /// </summary>
+    private Vector3 FacingForward
+    {
+        get
+        {
+            Vector3 forward = orbitCamera != null
+                ? orbitCamera.PlanarRotation * Vector3.forward
+                : transform.forward;
+            forward.y = 0f;
+            return forward.sqrMagnitude > 0.0001f ? forward.normalized : transform.forward;
+        }
+    }
 
     private void Update()
     {
@@ -48,6 +73,11 @@ public class PlayerParry : MonoBehaviour
 
         _parryUntil = Time.time + parryWindow;
         _nextParryTime = Time.time + parryCooldown;
+
+        // 立刻转向相机朝向，避免"背对着敌人弹反"的怪异观感
+        Vector3 forward = FacingForward;
+        if (forward.sqrMagnitude > 0.0001f)
+            transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
 
         if (logParry) Debug.Log($"[PlayerParry] 开启弹反窗口 {parryWindow:F2}s", this);
         return true;
@@ -68,7 +98,7 @@ public class PlayerParry : MonoBehaviour
         Vector3 toAttacker = attacker.transform.position - transform.position;
         toAttacker.y = 0f;
         if (toAttacker.sqrMagnitude > 0.0001f &&
-            Vector3.Angle(transform.forward, toAttacker) > facingAngle * 0.5f)
+            Vector3.Angle(FacingForward, toAttacker) > facingAngle * 0.5f)
             return false;
 
         enemy = attacker.GetComponentInParent<EnemyController>();

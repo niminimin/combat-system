@@ -2610,6 +2610,7 @@ MonoBehaviour:
   parryWindow: 0.25
   parryCooldown: 0.6
   facingAngle: 160
+  orbitCamera: {fileID: 234868644}
   logParry: 1
 --- !u!1001 &1930900781
 PrefabInstance:
