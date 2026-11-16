@@ -48,21 +48,36 @@ public class EnemyLocomotion : MonoBehaviour
 
     /// <summary>
     /// 朝目标移动（每帧调用无妨，SetDestination 会自己复用路径）。
-    /// <paramref name="overrideStoppingDistance"/> 传负数表示用默认的 stopDistance。
+    /// 返回 false 表示"没有可用的路径"（目标点不在网格上 / 寻路失败）。
     ///
+    /// <paramref name="overrideStoppingDistance"/> 传负数表示用默认的 stopDistance。
     /// 环绕时必须传一个很小的值（如 0.1），因为环绕的目标点每帧只往前挪一两厘米，
     /// 若沿用 stopDistance(1.2)，Agent 会认为"早已到达"而原地不动。
     /// </summary>
-    public void MoveTo(Vector3 destination, float speed, float overrideStoppingDistance = -1f)
+    public bool MoveTo(Vector3 destination, float speed, float overrideStoppingDistance = -1f)
     {
-        if (Agent == null || !Agent.isOnNavMesh) return;
+        if (Agent == null || !Agent.isOnNavMesh) return false;
 
         Agent.isStopped = false;
         Agent.speed = speed;
         Agent.stoppingDistance = overrideStoppingDistance >= 0f
             ? overrideStoppingDistance
             : stopDistance;
-        Agent.SetDestination(destination);
+
+        if (!Agent.SetDestination(destination)) return false;
+        if (Agent.pathPending) return true;   // 还在算路径，先当成功，下一帧再看
+        return Agent.pathStatus == NavMeshPathStatus.PathComplete;
+    }
+
+    /// <summary>当前路径是否完整可达（部分路径说明目标绕不到）。</summary>
+    public bool IsPathValid
+    {
+        get
+        {
+            if (Agent == null || !Agent.isOnNavMesh) return false;
+            if (Agent.pathPending) return true;          // 还在算，先别急着判定失败
+            return Agent.pathStatus == NavMeshPathStatus.PathComplete;
+        }
     }
 
     /// <summary>停止移动并清掉当前路径。</summary>
