@@ -1119,7 +1119,7 @@ MonoBehaviour:
   combatRange: 3
   disengageRange: 4.5
   tokenRange: 5
-  approachSpeed: 3
+  approachSpeed: 1.4
   loseTargetDistance: 14
   chaseSpeed: 4.5
   returnSpeed: 2.5
@@ -2245,7 +2245,7 @@ MonoBehaviour:
   combatRange: 3
   disengageRange: 4.5
   tokenRange: 5
-  approachSpeed: 3
+  approachSpeed: 1.4
   loseTargetDistance: 14
   chaseSpeed: 4.5
   returnSpeed: 2.5
@@ -3279,7 +3279,7 @@ MonoBehaviour:
   combatRange: 3
   disengageRange: 4.5
   tokenRange: 5
-  approachSpeed: 3
+  approachSpeed: 1.4
   loseTargetDistance: 14
   chaseSpeed: 4.5
   returnSpeed: 2.5
