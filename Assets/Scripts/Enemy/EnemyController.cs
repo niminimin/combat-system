@@ -136,6 +136,9 @@ public abstract class EnemyController : MonoBehaviour
     // 被攻击后的"强制警觉"截止时间
     private float _alertUntil;
 
+    // 拿到令牌时正处在受击硬直里 → 等硬直结束再出手
+    private bool _pendingAttack;
+
     /// <summary>子类指定出生时进入哪个状态。</summary>
     protected abstract EnemyState InitialState { get; }
 
@@ -192,11 +195,14 @@ public abstract class EnemyController : MonoBehaviour
     {
         _alertUntil = Time.time + Mathf.Max(0f, alertMemory);
 
+        // 站岗/回位途中被打 → 立刻进入追击（先入战斗，才有资格抢令牌）
         if (CurrentStateId == EnemyState.GUARD || CurrentStateId == EnemyState.RETURN)
             SwitchState(EnemyState.CHASE);
 
-        // TODO: 令牌系统接入后在这里给"反击权"
-        // CombatDirector.Instance?.ForceGrant(this);
+        // 反击权：抢走当前持有者的令牌（无视冷却）
+        // 如果此时正处在受击硬直，OnTokenGranted 会把它记成 pending，硬直结束再出手
+        if (CombatDirector.Instance != null)
+            CombatDirector.Instance.ForceGrant(this);
     }
 
     /// <summary>是否处于"被打了"的强制警觉期。</summary>
@@ -262,6 +268,17 @@ public abstract class EnemyController : MonoBehaviour
             Locomotion.Stop();
             if (Animator != null) Animator.SetFloat(SpeedHash, 0f, 0.1f, Time.deltaTime);
             return;
+        }
+
+        // 硬直结束：如果被打时抢到了令牌，现在才真正出手
+        if (_pendingAttack)
+        {
+            _pendingAttack = false;
+            if (CombatDirector.Instance == null || CombatDirector.Instance.CurrentHolder == this)
+            {
+                SwitchState(EnemyState.ATTACK);
+                return;
+            }
         }
 
         if (currentState != null) currentState.LogicUpdate(this);
@@ -357,15 +374,27 @@ public abstract class EnemyController : MonoBehaviour
         }
     }
 
-    /// <summary>导演把令牌交给它：进入攻击状态。</summary>
+    /// <summary>
+    /// 导演把令牌交给它：进入攻击状态。
+    /// 如果正处在受击硬直里，先记下来，等硬直结束再出手
+    /// （否则会立刻 TryAttack，把受击动画覆盖掉）。
+    /// </summary>
     public void OnTokenGranted()
     {
+        if (IsStaggered)
+        {
+            _pendingAttack = true;
+            return;
+        }
+
         SwitchState(EnemyState.ATTACK);
     }
 
     /// <summary>导演收回令牌（超时/被打断）。</summary>
     public void OnTokenRevoked()
     {
+        _pendingAttack = false;
+
         if (CurrentStateId == EnemyState.ATTACK)
             SwitchState(EnemyState.COMBAT_IDLE);
     }

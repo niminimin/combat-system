@@ -167,14 +167,26 @@ public class CombatDirector : MonoBehaviour
         enemy.OnTokenRevoked();
     }
 
-    /// <summary>被打时插队（反击权，第 2 步接入）。</summary>
+    /// <summary>
+    /// 被打时插队抢令牌（反击权）。
+    /// · 无视全局冷却
+    /// · 如果当前有人持牌，先收回
+    /// · 如果被打的就是持牌者，不重复授予（他本来就该反击）
+    /// </summary>
     public void ForceGrant(EnemyController enemy)
     {
         if (enemy == null) return;
+        if (enemy.IsDead) return;
 
-        if (CurrentHolder != null && CurrentHolder != enemy)
+        if (CurrentHolder == enemy) return;   // 已经是它，无需重复
+
+        if (CurrentHolder != null)
+        {
+            if (logEvents) Debug.Log($"[CombatDirector] {enemy.name} 被打，收回 {CurrentHolder.name} 的令牌");
             Revoke(CurrentHolder);
+        }
 
+        if (logEvents) Debug.Log($"[CombatDirector] {enemy.name} 被打，插队获得令牌");
         Grant(enemy);
     }
 }
