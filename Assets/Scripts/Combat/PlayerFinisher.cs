@@ -12,7 +12,8 @@ using UnityEngine;
 ///   ⑤ 播放占位动画（复用 Attack），到点结算致命伤害
 ///   ⑥ 解锁，恢复正常
 ///
-/// 无敌是"关掉 PlayerHitReaction"实现的——处决期间玩家完全不吃伤害。
+/// 无敌由 PlayerHitReaction.IsInvulnerable 判断（读 IsExecuting），
+/// 不能靠禁用组件实现——命中判定是直接调 OnHit 的，禁用挡不住。
 /// </summary>
 [DisallowMultipleComponent]
 public class PlayerFinisher : MonoBehaviour
@@ -278,8 +279,8 @@ public class PlayerFinisher : MonoBehaviour
         }
         if (parry != null) parry.enabled = !locked;
 
-        // 无敌：处决期间完全不接受伤害
-        if (hitReaction != null) hitReaction.enabled = !locked;
+        // 无敌不靠"禁用受击组件"——命中判定会直接调 OnHit，禁用挡不住。
+        // 真正的免疫在 PlayerHitReaction.IsInvulnerable 里判断（读 IsExecuting）。
     }
 
     private void OnDrawGizmosSelected()

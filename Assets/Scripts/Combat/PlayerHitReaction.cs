@@ -60,17 +60,31 @@ public class PlayerHitReaction : MonoBehaviour, IDamageReceiver
     [Tooltip("血量组件（留空则自动查找）")]
     [SerializeField] private CharacterStats stats;
 
+    [Tooltip("处决组件（留空则自动查找）：处决期间玩家无敌")]
+    [SerializeField] private PlayerFinisher finisher;
+
     private void Awake()
     {
         if (animator == null) animator = GetComponentInChildren<Animator>();
         if (parry == null) parry = GetComponent<PlayerParry>();
         if (stats == null) stats = GetComponent<CharacterStats>();
+        if (finisher == null) finisher = GetComponent<PlayerFinisher>();
 
         _triggerHash = Animator.StringToHash(hitTrigger);
     }
 
+    /// <summary>
+    /// 当前是否无敌。
+    /// 注意：不能靠"禁用本组件"来实现无敌——命中判定是直接调 OnHit 的，
+    /// 组件禁用不会阻止这次调用，必须在这里显式拦下。
+    /// </summary>
+    public bool IsInvulnerable => finisher != null && finisher.IsExecuting;
+
     public void OnHit(GameObject source, float damage)
     {
+        // 处决期间完全免疫：不掉血、不播受击、不打断处决动作
+        if (IsInvulnerable) return;
+
         // 弹反优先：窗口内 + 正面来敌 → 敌人被打断，玩家不受击
         if (parry != null)
         {

@@ -3351,7 +3351,8 @@ MonoBehaviour:
   hitShake: 0.55
   parryShake: 0.75
   parry: {fileID: 1484661162}
-  stats: {fileID: 0}
+  stats: {fileID: 1484661164}
+  finisher: {fileID: 1484661165}
 --- !u!114 &1484661162
 MonoBehaviour:
   m_ObjectHideFlags: 0
