@@ -212,10 +212,12 @@ public class PlayerFinisher : MonoBehaviour
     {
         _elapsed += Time.deltaTime;
 
-        // 目标中途死掉（被别的伤害打死）→ 直接结束
-        if (_target == null || _target.IsDead)
+        // 目标在"我们结算之前"就被别的伤害打死了 → 立即收尾
+        // 注意：我们自己那一下结算之后目标也是死的，但那时 _damageApplied 为 true，
+        // 不能因此提前结束——否则处决动作会被截断，玩家也被提前解锁。
+        if (!_damageApplied && (_target == null || _target.IsDead))
         {
-            if (!_damageApplied) ApplyDamage();
+            ApplyDamage();
             End();
             return;
         }

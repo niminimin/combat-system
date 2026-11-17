@@ -27,7 +27,16 @@ public class DeadState : BaseState
         owner.DisableCollider();
 
         // ③ 播死亡动画（Animator 里有一个 Dead 布尔 + Death 状态）
-        if (owner.Animator != null) owner.Animator.SetBool("Dead", true);
+        //    例外：被处决时"被处决动画"本身就是倒地动作，
+        //    再叠一个死亡动画会变成"爬起来再倒一次"，所以要跳过。
+        //    此时 Animator 会停在被处决动画的最后一帧（非循环 clip 自动保持）。
+        if (owner.Animator != null)
+        {
+            if (owner.IsBeingExecuted)
+                Debug.Log($"[DeadState] {owner.name} 被处决致死，跳过死亡动画，保持倒地姿势");
+            else
+                owner.Animator.SetBool("Dead", true);
+        }
 
         // ④ 关门：不再参与感知/AI
         owner.enabled = false;
