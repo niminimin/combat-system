@@ -35,6 +35,9 @@ public class PlayerFinisher : MonoBehaviour
     [Tooltip("第几秒结算致命伤害（秒）")]
     [SerializeField, Min(0f)] private float damageTime = 0.9f;
 
+    [Tooltip("第几秒触发相机抖动（秒）。和伤害分开，方便对齐'刀碰到身体'的那一帧")]
+    [SerializeField, Min(0f)] private float shakeTime = 1.8f;
+
     [Tooltip("玩家吸附到敌人前方的距离（米）")]
     [SerializeField, Min(0.1f)] private float snapDistance = 0.9f;
 
@@ -65,6 +68,7 @@ public class PlayerFinisher : MonoBehaviour
     private EnemyController _target;
     private float _elapsed;
     private bool _damageApplied;
+    private bool _shakeApplied;
 
     // 每帧检测用的缓冲区（避免 OverlapSphere 的每帧 GC）
     private readonly Collider[] _hitBuffer = new Collider[16];
@@ -150,6 +154,7 @@ public class PlayerFinisher : MonoBehaviour
         _target = enemy;
         _elapsed = 0f;
         _damageApplied = false;
+        _shakeApplied = false;
         Candidate = null;
 
         AlignWithTarget(enemy);
@@ -223,6 +228,7 @@ public class PlayerFinisher : MonoBehaviour
         }
 
         if (!_damageApplied && _elapsed >= damageTime) ApplyDamage();
+        if (!_shakeApplied && _elapsed >= shakeTime) ApplyShake();
 
         if (_elapsed >= executeDuration) End();
     }
@@ -240,11 +246,20 @@ public class PlayerFinisher : MonoBehaviour
             stats.TakeDamage(stats.MaxHealth * 2f, gameObject);
         }
 
-        // 打击反馈：顿帧 + 震动
+        // 顿帧留在结算这一刻（砍中的顿感），相机抖动按 shakeTime 单独触发
         if (HitStop.Instance != null) HitStop.Instance.Freeze();
-        if (CameraShake.Instance != null) CameraShake.Instance.Shake(shakeAmount);
 
         if (logEvents) Debug.Log($"[PlayerFinisher] 处决结算：{_target.name}", this);
+    }
+
+    /// <summary>相机抖动（时间点和伤害结算分开，方便对齐动画的"刀碰到身体"）。</summary>
+    private void ApplyShake()
+    {
+        _shakeApplied = true;
+
+        if (CameraShake.Instance != null) CameraShake.Instance.Shake(shakeAmount);
+
+        if (logEvents) Debug.Log($"[PlayerFinisher] 处决震动（{shakeTime:F2}s）", this);
     }
 
     private void End()

@@ -3419,10 +3419,11 @@ MonoBehaviour:
   enemyMask:
     serializedVersion: 2
     m_Bits: 512
-  executeRange: 2.4
+  executeRange: 3
   minFacingDot: 0.2
   executeDuration: 3
   damageTime: 0.7
+  shakeTime: 1.8
   snapDistance: 1.2
   finisherStateName: Execute
   shakeAmount: 0.7
