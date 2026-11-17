@@ -3421,10 +3421,10 @@ MonoBehaviour:
     m_Bits: 512
   executeRange: 2.4
   minFacingDot: 0.2
-  executeDuration: 1.3
+  executeDuration: 3
   damageTime: 0.7
-  snapDistance: 0.9
-  finisherStateName: Attack
+  snapDistance: 1.2
+  finisherStateName: Execute
   shakeAmount: 0.7
   logEvents: 1
 --- !u!1 &1678030966

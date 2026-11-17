@@ -13,6 +13,9 @@ using UnityEngine;
 /// </summary>
 public class ExecutedState : BaseState
 {
+    // Animator 里的状态名
+    private const string ExecutedStateName = "Executed";
+
     public override EnemyState Id => EnemyState.EXECUTED;
 
     public override void OnEnter(EnemyController owner)
@@ -29,8 +32,8 @@ public class ExecutedState : BaseState
             owner.Attack.enabled = false;
         }
 
-        // ③ 占位表现：播一次受击动作（以后换成"被处决"动画）
-        if (owner.Reaction != null) owner.Reaction.PlayImpact();
+        // ③ 播"被处决"动画（Animator 里的 Executed 状态，无出口过渡，播完保持最后一帧）
+        if (owner.Animator != null) owner.Animator.CrossFade(ExecutedStateName, 0.1f);
     }
 
     public override void OnExit(EnemyController owner)
