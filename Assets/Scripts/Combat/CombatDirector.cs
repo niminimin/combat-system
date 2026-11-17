@@ -167,6 +167,9 @@ public class CombatDirector : MonoBehaviour
         // ② 没人持牌 → 冷却到了就挑一个
         if (Time.time < _nextGrantTime) return;
 
+        // 没有任何人参战（还没被发现 / 全死了）→ 不用选人，也不用刷诊断日志
+        if (_combatants.Count == 0) return;
+
         EnemyController best = null;
         float bestTime = float.MaxValue;
 
