@@ -3422,7 +3422,7 @@ MonoBehaviour:
   executeRange: 3
   minFacingDot: 0.2
   executeDuration: 3
-  damageTime: 0.7
+  damageTime: 1.8
   shakeTime: 1.8
   snapDistance: 1.2
   finisherStateName: Execute

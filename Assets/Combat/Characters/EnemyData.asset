@@ -13,4 +13,5 @@ MonoBehaviour:
   m_Name: EnemyData
   m_EditorClassIdentifier: 
   displayName: "\u5B88\u536B"
-  maxHealth: 60
+  maxHealth: 80
+  executeThreshold: 0.25
