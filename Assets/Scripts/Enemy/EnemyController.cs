@@ -144,6 +144,7 @@ public abstract class EnemyController : MonoBehaviour
     public BaseState retreatState { get; private set; }
     public BaseState returnState { get; private set; }
     public BaseState deadState { get; private set; }
+    public BaseState executedState { get; private set; }
 
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int InCombatHash = Animator.StringToHash("InCombat");
@@ -191,6 +192,7 @@ public abstract class EnemyController : MonoBehaviour
         retreatState = CreateRetreatState();
         returnState = CreateReturnState();
         deadState = CreateDeadState();
+        executedState = new ExecutedState();
 
         SwitchState(InitialState);
     }
@@ -416,6 +418,34 @@ public abstract class EnemyController : MonoBehaviour
     /// <summary>是否已经死亡（导演据此回收令牌）。</summary>
     public bool IsDead => CurrentStateId == EnemyState.DEAD;
 
+    // ───────────────────── 处决 ─────────────────────
+
+    /// <summary>是否正在被处决（会被 PlayerFinisher 置位，期间不响应任何伤害/受击）。</summary>
+    public bool IsBeingExecuted { get; private set; }
+
+    /// <summary>现在能不能被处决：没死、血量低于阈值、而且没在被处决中。</summary>
+    public bool IsExecutable =>
+        !IsDead && !IsBeingExecuted && Stats != null && Stats.IsExecutable;
+
+    /// <summary>进入"被处决"状态：冻结 AI，等玩家结算。</summary>
+    public void BeginExecution()
+    {
+        if (IsDead) return;
+
+        IsBeingExecuted = true;
+        _pendingAttack = false;      // 取消排队的反击
+        SwitchState(EnemyState.EXECUTED);
+    }
+
+    /// <summary>结束处决（如果没死，回到战斗待机继续打）。</summary>
+    public void EndExecution()
+    {
+        IsBeingExecuted = false;
+
+        if (!IsDead && CurrentStateId == EnemyState.EXECUTED)
+            SwitchState(EnemyState.COMBAT_IDLE);
+    }
+
     /// <summary>
     /// 现在能不能把攻击令牌交给它。
     /// 导演每帧问这个来筛候选人。
@@ -495,6 +525,7 @@ public abstract class EnemyController : MonoBehaviour
             case EnemyState.ATTACK: return attackState;
             case EnemyState.RETREAT: return retreatState;
             case EnemyState.RETURN: return returnState;
+            case EnemyState.EXECUTED: return executedState;
             case EnemyState.DEAD: return deadState;
             default: return null;
         }

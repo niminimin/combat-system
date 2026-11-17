@@ -63,6 +63,9 @@ public class CombatDirector : MonoBehaviour
     // 诊断日志的节流时间
     private float _nextDiagnosticTime;
 
+    // 处决锁：处决期间暂停发牌，其他敌人观战
+    private bool _executionLock;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -115,8 +118,24 @@ public class CombatDirector : MonoBehaviour
 
     // ───────────────────────── 发放 ─────────────────────────
 
+    /// <summary>
+    /// 处决锁：播放处决动作期间暂停发牌，让其他敌人"观战"。
+    /// 关闭时额外推后一点发放时间，避免处决刚结束就有人扑上来。
+    /// </summary>
+    public void SetExecutionLock(bool locked)
+    {
+        if (_executionLock == locked) return;
+        _executionLock = locked;
+
+        if (logEvents) Debug.Log($"[CombatDirector] 处决锁 {(locked ? "开启" : "关闭")}");
+        if (!locked) _nextGrantTime = Mathf.Max(_nextGrantTime, Time.time + 0.4f);
+    }
+
     private void Update()
     {
+        // 处决期间导演完全停摆（不检查超时、不发牌）
+        if (_executionLock) return;
+
         // ① 有人持牌 → 只检查是否失效/超时
         if (CurrentHolder != null)
         {

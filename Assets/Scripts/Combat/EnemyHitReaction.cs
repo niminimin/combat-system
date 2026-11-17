@@ -61,6 +61,10 @@ public class EnemyHitReaction : MonoBehaviour, IDamageReceiver
     /// <summary>被命中时调用（由 MeleeHitbox 触发）。</summary>
     public void OnHit(GameObject source, float damage)
     {
+        // 正在被处决：不接受任何伤害/受击（否则会被打断，和处决动作抢 Animator）
+        EnemyController owner = GetComponent<EnemyController>();
+        if (owner != null && owner.IsBeingExecuted) return;
+
         // 相机抖动每次命中都要有 —— 连招第二刀落在受击动画里也不能没反馈
         if (CameraShake.Instance != null) CameraShake.Instance.Shake(shakeAmount);
 

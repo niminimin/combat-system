@@ -11,5 +11,6 @@ public enum EnemyState
     ATTACK,       // 攻击：接近 + 出手（持令牌期间）
     RETREAT,      // 后撤：攻击后退开一段，再回战斗待机
     RETURN,       // 回位：走回出生点
+    EXECUTED,     // 被处决：冻结 AI，等待玩家的处决动作结算
     DEAD          // 死亡：停止一切行为（后续接死亡动画）
 }

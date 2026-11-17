@@ -33,6 +33,13 @@ public class CharacterStats : MonoBehaviour
     /// <summary>角色显示名（以后接 UI / Boss 血条）。</summary>
     public string DisplayName => data != null ? data.displayName : name;
 
+    /// <summary>可处决的血量比例（0 表示不可处决）。</summary>
+    public float ExecuteThreshold => data != null ? data.executeThreshold : 0f;
+
+    /// <summary>当前是否处于"可处决"状态（血量低于阈值）。</summary>
+    public bool IsExecutable =>
+        !IsDead && ExecuteThreshold > 0f && CurrentHealth <= MaxHealth * ExecuteThreshold;
+
     /// <summary>当前生命。</summary>
     public float CurrentHealth { get; private set; }
 

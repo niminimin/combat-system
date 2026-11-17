@@ -84,6 +84,16 @@ public class ThirdPersonMotor : MonoBehaviour
     /// <summary>当前水平速度大小（米/秒），接动画时用来驱动走/跑混合。</summary>
     public float CurrentSpeed => new Vector2(_planarVelocity.x, _planarVelocity.z).magnitude;
 
+    /// <summary>
+    /// 清零速度。传送（处决吸附）或重新启用组件后调用，
+    /// 否则上一帧残留的速度会让角色"滑"出去一小段。
+    /// </summary>
+    public void ResetVelocity()
+    {
+        _planarVelocity = Vector3.zero;
+        _verticalVelocity = 0f;
+    }
+
     /// <summary>0~1 的归一化速度，等于 CurrentSpeed / walkSpeed。</summary>
     public float NormalizedSpeed => walkSpeed > 0.001f ? Mathf.Clamp01(CurrentSpeed / walkSpeed) : 0f;
 
@@ -123,8 +133,7 @@ public class ThirdPersonMotor : MonoBehaviour
     /// </summary>
     [ContextMenu("把模型原点对齐到脚下")]
     public void AlignVisualToGround()
-    {
-        Transform visual = visualRoot != null ? visualRoot : transform.Find("Visual");
+    {        Transform visual = visualRoot != null ? visualRoot : transform.Find("Visual");
         if (visual == null)
         {
             Debug.LogWarning($"[{nameof(ThirdPersonMotor)}] 找不到视觉子物体（Visual），无法对齐脚底。", this);

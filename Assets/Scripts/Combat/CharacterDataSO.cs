@@ -20,4 +20,8 @@ public class CharacterDataSO : ScriptableObject
 
     [Tooltip("最大生命值")]
     [Min(1f)] public float maxHealth = 100f;
+
+    [Header("处决")]
+    [Tooltip("血量低于这个比例时可以处决（0.25 = 25%）。0 表示不可处决")]
+    [Range(0f, 1f)] public float executeThreshold = 0.25f;
 }
